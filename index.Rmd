@@ -306,7 +306,7 @@ otherdc$countryname <- factor(otherdc$countryname, levels = unique(otherdc$count
 otherdc_plot<-plot_ly(otherdc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "Other DC"),yaxis=list(title='Total Amount ((Million USD)'))
 
-subplot(ldc_plot, otherdc_plot, titleX = T, titleY = T)%>%layout(barmode='stack')
+subplot(ldc_plot, otherdc_plot, titleX = T, titleY = T, shareY = T)%>%layout(barmode='stack')
 
 ```
 GCF - Other
