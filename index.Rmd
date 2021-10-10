@@ -279,7 +279,7 @@ GCF_cat$`Country Category` <- factor(GCF_cat$`Country Category`, levels = unique
 ```
 
 
-### Total Funding - by Country Category2
+#### Total Funding - by Country Category2
 ```{r}
 GCF_cat<-GCF_merge%>%dplyr::filter(`Grand Total`>0.0)%>%group_by(Category2)%>%summarise('Total'=sum(`Grand Total`))
 
