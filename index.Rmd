@@ -15,6 +15,9 @@ library(plotly)
 library(ggplot2)
 library(dplyr)
 library(reshape)
+library(rpivotTable)
+library(DT)
+library(leaflet)
 
 ```
 
@@ -23,338 +26,354 @@ library(reshape)
 tracker<-read_excel("Open_NAPs_Database.xlsm", sheet = "tracker")
 colnames(tracker)[colnames(tracker)=="Standard measure based on progress report"]<-"Measure"
 tracker$Element<-factor(tracker$Element, levels = c("Laying the ground work and addressing gaps", "Preparatory elements" ,"Implementation strategies" ,"Reporting monitoring and review"))
+measures<-read_excel("Open_NAPs_Database.xlsm", sheet = "Measures")
+measures$`Without Measure`<-154-(measures$`Developing Countries  (non-LDC)`+measures$LDCs)
+GCF_accessed<-read_excel("Open_NAPs_Database.xlsm", sheet = "GCF_Accessed")
+GCF_projects<-read_excel("Open_NAPs_Database.xlsm", sheet = "GCF")
+categories<-read_excel("Open_NAPs_Database.xlsm", sheet = "country_categories")
+NAPS <- read_excel("Open_NAPs_Database.xlsm",sheet = "Submitted_NAPs")
+country_codes_un <- read_excel("Open_NAPs_Database.xlsm",sheet = "country_codes_un")
+regions <- read_excel("Open_NAPs_Database.xlsm", sheet = "UNCTAD_Regions")
+iso_cat<-read_excel("Open_NAPs_Database.xlsm",sheet = "country_categories")
+latlong <- read_excel("Open_NAPs_Database.xlsm",sheet = "countrylatlong")
+
+#merge
+GCF_merge<-merge(GCF_accessed, categories, by='countryname', all.x = T)
+GCF_merge<-GCF_merge[,c(1,6,7,8,9,10,11)]
+
+tracker_merge<-merge(tracker,categories, by='countryname', all.x = T)
+
+unregions<-merge(country_codes_un, regions, by='countryname', all.x=TRUE)
+unregions<-merge(unregions,iso_cat, by='countryname', all.x=TRUE)
+NAPCountries<-merge(unregions,NAPS, by="countryname", all.y = TRUE)
+xycountrycode<-merge(unregions,latlong, by='countryname', all.x = TRUE)
+NAP_Countries<-merge(NAPS,xycountrycode, by="countryname", all.x = TRUE)
+```
+
+Progress to Formulate & Implement NAPS
+==================================================================================
+
+### Measures General Outlook
+
+```{r}
+measures$Measure<-factor(measures$Measure, levels = unique(measures$Measure)[order(measures$Code, decreasing = TRUE)])
+
+fig <- plot_ly(measures, x = ~LDCs, y = ~Measure, type = 'bar', orientation = 'h',name = 'LDCs',
+        marker = list(color = 'rgba(38, 24, 74, 0.8)',
+                      line = list(color = 'rgb(248, 248, 249)', width = 1))) 
+fig <- fig %>% add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries  (non-LDC)', marker = list(color = 'rgba(71, 68, 131, 0.85)')) 
+
+fig <- fig %>% add_trace(x = ~`Without Measure`,name='Without Measure', marker = list(color = 'rgba(164, 163, 204, 0.95)')) 
+fig <- fig %>% layout(xaxis = list(title = "No. of Countries",
+                      showgrid = TRUE,
+                      showline = FALSE,
+                      showticklabels = TRUE,
+                      zeroline = FALSE,
+                      domain = c(0.15, 1)),
+         yaxis = list(title = "",
+                      showgrid = FALSE,
+                      showline = FALSE,
+                      showticklabels = FALSE,
+                      zeroline = FALSE),
+         barmode = 'stack',
+         paper_bgcolor = 'rgb(248, 248, 255)', plot_bgcolor = 'rgb(248, 248, 255)',
+         margin = list(l = 200, r = 0, t = 10, b = 50),
+         showlegend = TRUE, legend=list(orientation='h', x=0.2,y=-0.15))
+
+# label yaxis
+fig <- fig %>% add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure,
+                  xanchor = 'right',
+                  text = paste(measures$Code, '-',substr(measures$Measure, 1,40), '..'),
+                  font = list(family = 'Arial', size = 12,
+                            color = 'rgb(67, 67, 67)'),
+                  showarrow = FALSE, align = 'right') 
+
+
+ 
+
+
+ 
+
+fig
+
+```
+
+Select Measures
+=========================================================================================
+{.tabset }
+---------------------------------------------
+### Important Measures -  general
+
+```{r}
+#selected_measures<-measures%>%dplyr::filter(Code=='A1'|Code=='A2'|Code=='A3'|Code=='A8'|Code=='A9'|Code=='B3'|Code=='B7'|Code=='C3'|Code=='D4')
+selected_measures<-tracker_merge%>%dplyr::filter(`Measure code`=='A1'|`Measure code`=='A2'|`Measure code`=='A3'|`Measure code`=='A8'|`Measure code`=='A9'|`Measure code`=='B3'|`Measure code`=='B7'|`Measure code`=='C3'|`Measure code`=='D4')
+
+df<-selected_measures%>%group_by(Element,Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+plot_ly(df,type='bar',x=paste(df$`Measure code`, substr(df$Measure, 1,40), '...', sep = '-'),y=~Countries, text=~Countries, textposition='auto', color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "Measure"),yaxis=list(title='No. of Countries'))
+
 ```
 
 
-Some general stuff 
-==========================================================
-Explore by Region {.tabset} 
------------------------------------------------------------------------
-
-### No. Countries that have taken any measure (by region)
+### Important Measures by Region
 
 ```{r}
 
-df<-tracker%>%group_by(Country,Region)%>%count(Measure)%>%summarise('Measures'=sum(n))
+africa<-selected_measures%>%filter(Region=='Africa')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+af_plot<-plot_ly(africa,type='bar',x=paste(africa$`Measure code`, substr(africa$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "Africa"),yaxis=list(title='No. of Countries'))
 
-df<-df%>%group_by(Region)%>%count(Country)%>%summarise('Countries'=sum(n))
-df$Region<-factor(df$Region,levels = unique(df$Region)[order(df$Countries,decreasing = T)])
-plot_ly(data=df,type='bar', x=~Countries, y=~Region)
+
+asia_pacific<-selected_measures%>%filter(Region=='Asia-Pacific')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+asia_plot<-plot_ly(asia_pacific, type='bar',x=paste(asia_pacific$`Measure code`, substr(asia_pacific$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "Asia-Pacific"),yaxis=list(title='No. of Countries'))
+
+
+lac<-selected_measures%>%filter(Region=='LAC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+lac_plot<-plot_ly(lac,type='bar',x=paste(lac$`Measure code`, substr(lac$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "LAC"),yaxis=list(title='No. of Countries'))
+
+
+eu<-selected_measures%>%filter(Region=='Eastern Europe')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+eu_plot<-plot_ly(eu,type='bar',x=paste(eu$`Measure code`, substr(eu$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "Eastern Europe"),yaxis=list(title='No. of Countries'))
+
+
+plotly::subplot(af_plot, asia_plot,lac_plot,eu_plot, titleX = T,shareY = T)%>% layout(barmode = 'stack')
+
 ```
 
-### Measures by Region
+#### Important Measures by Country Category
 
 ```{r}
 
-africa<-tracker%>%filter(Region=='Africa')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Africa"))
+ldc<-selected_measures%>%filter(Category=='LDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+ldc_plot<-plot_ly(ldc,type='bar',x=paste(ldc$`Measure code`, substr(ldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "LDC"),yaxis=list(title='No. of Countries'))
 
 
-asia_pacific<-tracker%>%filter(Region=='Asia-Pacific')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Asia-Pacific"))
+sids<-selected_measures%>%filter(Category=='SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+sids_plot<-plot_ly(sids, type='bar',x=paste(sids$`Measure code`, substr(sids$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "SIDS"),yaxis=list(title='No. of Countries'))
 
 
-lac<-tracker%>%filter(Region=='LAC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=T)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LAC"))
+ldc_sids<-selected_measures%>%filter(Category=='LDC, SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+ldc_sids_plot<-plot_ly(ldc_sids, type='bar',x=paste(ldc_sids$`Measure code`, substr(ldc_sids$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=T)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "LDC,SIDS"),yaxis=list(title='No. of Countries'))
 
 
-eu<-tracker%>%filter(Region=='Eastern Europe')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Eastern Europe"))
+lldc<-selected_measures%>%filter(Category=='LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+lldc_plot<-plot_ly(lldc, type='bar',x=paste(lldc$`Measure code`, substr(lldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "LLDC"),yaxis=list(title='No. of Countries'))
 
 
-plotly::subplot(africa, asia_pacific,lac,eu, titleX = T,shareY = T)%>% layout(barmode = 'stack', showlegend = TRUE, legend=list(orientation='h', y=1.0,x=0.7, itemsizing='constant'))
+ldc_lldc<-selected_measures%>%filter(Category=='LDC, LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+ldc_lldc_plot<-plot_ly(ldc_lldc, type='bar',x=paste(ldc_lldc$`Measure code`, substr(ldc_lldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "LDC,LLDC"),yaxis=list(title='No. of Countries'))
+
+
+otherdc<-selected_measures%>%filter(Category=='Other developing country')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+otherdc_plot<-plot_ly(otherdc,type='bar',x=paste(otherdc$`Measure code`, substr(otherdc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"),yaxis=list(title='No. of Countries'))
+
+
+plotly::subplot(ldc_plot,sids_plot,ldc_sids_plot,lldc_plot,ldc_lldc_plot,otherdc_plot, titleX = T,shareY = T)%>% layout(barmode = 'stack', showlegend = F)
+
 
 ```
 
-Explore by Country Category {.tabset}
---------------------------------------------------------
-### No. Countries that have taken any measure (by country category)
+### Important Measures by Country Category2
 
 ```{r}
 
-df<-tracker%>%group_by(Country,Category)%>%count(Measure)%>%summarise('Measures'=sum(n))
+ldc<-selected_measures%>%filter(Category2=='LDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+ldc_plot<-plot_ly(ldc,type='bar',x=paste(ldc$`Measure code`, substr(ldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "LDC"),yaxis=list(title='No. of Countries'))
 
-#df$Category <- factor(df$Category, levels = unique(df$Category)[order(df$Measures, decreasing = TRUE)])
 
-df<-df%>%group_by(Category)%>%count(Country)%>%summarise('Countries'=sum(n))
-df$Category<-factor(df$Category,levels =unique(df$Category)[order(df$Countries,decreasing = T)])
-plot_ly(data=df, type='bar', x=~Countries, y=~Category)
+otherdc<-selected_measures%>%filter(Category2=='Other developing country')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+otherdc_plot<-plot_ly(otherdc,type='bar',x=paste(otherdc$`Measure code`, substr(otherdc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"),yaxis=list(title='No. of Countries'))
+
+
+plotly::subplot(ldc_plot,otherdc_plot, titleX = T,shareY = T)%>% layout(barmode = 'stack', showlegend = F)
+
+
 ```
 
+Find full of measures[here](do we have a sharable link for the measures?)
 
-### Measures by Country Category
+NAP Submissions
+========================================================
+
+### Map
 
 ```{r}
 
-ldc<-tracker%>%filter(Category=='LDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC"))
+NAP_Countries$`Document title`<-paste('<a href=',NAP_Countries$Link, '>',NAP_Countries$`Document title`,'</a>', sep = "")
 
+NAP_Countries<-NAP_Countries%>%
+   mutate(popup_info=paste(countryname,"<br>","Submitted on:",NAP_Countries$`Date of submission`,"<br>","Title:",NAP_Countries$`Document title`))
 
-sids<-tracker%>%filter(Category=='SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "SIDS"))
-
-
-ldc_sids<-tracker%>%filter(Category=='LDC, SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=T)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,SIDS"))
-
-
-lldc<-tracker%>%filter(Category=='LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LLDC"))
-
-
-ldc_lldc<-tracker%>%filter(Category=='LDC, LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,LLDC"))
-
-
-otherdc<-tracker%>%filter(Category=='Other developing country')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~`Measure code`,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"))
-
-
-plotly::subplot(ldc,sids,ldc_sids,lldc,ldc_lldc,otherdc, titleX = T,shareY = T)%>% layout(barmode = 'stack', showlegend = TRUE)
-
+leaflet(NAP_Countries)%>%setView(lng= 35.79, lat= -9.12 , zoom = 2.3)%>%
+  addTiles()%>%
+  addCircleMarkers(data=NAP_Countries, fill=T,lng=~lon, lat =~lat, radius = 6, color='red', popup =~popup_info)
+ 
 ```
 
-Gaps
-===========================================================
-column {data-width=350}
------------------------------------------------------------
-### Measures Summary (with gaps)
+### List
+```{r}
+NAPS$`Document title`<-paste('<a href=',NAPS$Link, '>',NAPS$`Document title`,'</a>', sep = "")
+
+colnames(NAPS)[colnames(NAPS)=='countryname']<-'Country'
+#colnames(GCF_projects)[colnames(GCF_projects)=='Region_init']<-'Region'
+naps<-NAPS[,-4]
+datatable(naps,filter = 'top',selection = 'multiple',callback = JS("return table;"), fillContainer = T,rownames = F, editable = F, style = 'jqueryui', class = 'display responsive', width = '100%', caption = "GCF Projects", extensions = 'Buttons', options=list(initComplete = JS("function(settings, json) {$(this.api().table().header()).css({'font-size' : '70%'});}"),pageLength= 10, dom='lfrtipB', buttons = c('copy', 'csv', 'excel', 'pdf')), escape = F)%>%
+  DT::formatStyle(columns = colnames(naps),fontSize= '12px')
+ 
+```
+
+
+
+GCF Resources
+===============================================================
+{.tabset}
+---------------------------------------------------------------
+
+### Total Funding - by Country
 
 ```{r}
-countries<-tracker%>%group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-countries$`Without Measure`<-154-countries$`With Measure`
-gapdf<-data.frame(countries)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-plot_ly(data=gapdf,y=~Measure.code,x=~value, group=~Measure, color = ~variable, colors = 'Reds')%>%
-  plotly::layout(barmode='stack',xaxis=list(title="No. of Countries"), legend=list(orientation='h', x=0.3, y=1.12))
+
+country_tot<-GCF_merge%>%dplyr::filter(`Grand Total`>0.0)%>%group_by(countryname)%>%summarise('Total'=sum(`Grand Total`))
+
+country_tot$countryname <- factor(country_tot$countryname, levels = unique(country_tot$countryname)[order(country_tot$Total, decreasing =FALSE)])
+
+  plot_ly(data=country_tot, type='bar', 
+          y=~countryname,
+          x=~Total)%>%plotly::layout(title='Total GCF Amount Approved - by Country (includes Readiness and Project Funding)',yaxis=list(title='Country'), xaxis=list(title='Total Amount ((Million USD)'))
+```
+
+#### Total Funding - by Country Category
+```{r, eval=FALSE}
+GCF_cat<-GCF_accessed%>%dplyr::filter(`Grand Total`>0.0)%>%group_by(`Country Category`)%>%summarise('Total'=sum(`Grand Total`))
+
+GCF_cat$`Country Category` <- factor(GCF_cat$`Country Category`, levels = unique(GCF_cat$`Country Category`)[order(GCF_cat$Total, decreasing = TRUE)])
+
+  plot_ly(data=GCF_cat, type='bar', 
+          y=~`Country Category`,
+          x=~Total)%>%
+    plotly::layout(title='Total GCF Amount Approved - by Country Category',yaxis=list(title='Category'), xaxis=list(title='Total Amount ((Million USD)'))
 ```
 
 
-### by Region
-__note to self:__ _are we supporting all countries in the listed regions? if do, get real total countries for each region, replace that value with 154_
-
+### Total Funding - by Country Category2
 ```{r}
-byregion<-tracker%>%group_by(Region,Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-byregion$`Without Measure`<-154-byregion$`With Measure`
-reg_gap<-data.frame(byregion)%>%reshape::melt(id.vars = c("Region", "Measure","Measure.code"))
-plot_ly(data=reg_gap,y=~Region,x=~value, group=~Measure, color = ~variable, colors = 'Reds',legendgroup=~Measure, showlegend=T)%>%
-  plotly::layout(barmode='stack',xaxis=list(title="No. of Countries"), legend=list(orientation='h', x=0.3, y=1.12))
+GCF_cat<-GCF_merge%>%dplyr::filter(`Grand Total`>0.0)%>%group_by(Category2)%>%summarise('Total'=sum(`Grand Total`))
+
+GCF_cat$Category2 <- factor(GCF_cat$Category2, levels = unique(GCF_cat$Category2)[order(GCF_cat$Total, decreasing = TRUE)])
+
+  plot_ly(data=GCF_cat, type='bar', 
+          x=~Category2,
+          y=~Total)%>%
+    plotly::layout(title='Total GCF Amount Approved - by Country Category',xaxis=list(title='Category'), yaxis=list(title='Total Amount ((Million USD)'))
 ```
 
-column
+### Total Funding - by Country/ Category2
+```{r}
+
+ldc<-GCF_merge%>%filter(Category2=='LDC')%>% filter(`Grand Total`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total`))
+ldc$countryname <- factor(ldc$countryname, levels = unique(ldc$countryname)[order(ldc$Total, decreasing = TRUE)])
+
+ldc_plot<-plot_ly(ldc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "LDC"),yaxis=list(title='Total Amount (\'000 USD)'))
+
+otherdc<-GCF_merge%>%filter(Category2=='Other developing country')%>% filter(`Grand Total`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total`))
+otherdc$countryname <- factor(otherdc$countryname, levels = unique(otherdc$countryname)[order(otherdc$Total, decreasing = TRUE)])
+
+otherdc_plot<-plot_ly(otherdc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"),yaxis=list(title='Total Amount ((Million USD)'))
+
+subplot(ldc_plot, otherdc_plot, titleX = T, titleY = T)%>%layout(barmode='stack')
+
+```
+GCF - Other
+=====================================================
+{data-orientation=columns}
 -----------------------------------------------------
-### Measures by Country Category (with gaps)
+
+### Readiness
+
 ```{r}
-ldc<-tracker%>%filter(Category=='LDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-ldc$`Without Measure`<-21-ldc$`With Measure`
-ldcdf<-data.frame(ldc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-ldc_plot<-plot_ly(data = ldcdf, type='bar',x=~Measure.code,y=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack',yaxis=list(title='No. of Countries'),  xaxis = list(title = "LDC"))
 
-sids<-tracker%>%filter(Category=='SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-sids$`Without Measure`<-32-sids$`With Measure`
-sidsdf<-data.frame(sids)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-sids_plot<-plot_ly(data =sidsdf, type='bar',x=~Measure.code,y=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "SIDS"))
+country_red<-GCF_merge%>%dplyr::filter(`Grand Total`>0.0)%>%group_by(countryname)%>%summarise('Total'=sum(`Readiness support approved`))
 
-ldc_sids<-tracker%>%filter(Category=='LDC, SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-ldc_sids$`Without Measure`<-8-ldc_sids$`With Measure`
-ldc_sidsdf<-data.frame(ldc_sids)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-ldc_sids_plot<-plot_ly(data = ldc_sidsdf, type='bar',x=~Measure.code,y=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,SIDS"))
+country_red$countryname <- factor(country_red$countryname, levels = unique(country_red$countryname)[order(country_red$Total, decreasing = F)])
 
-lldc<-tracker%>%filter(Category=='LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-lldc$`Without Measure`<-15-lldc$`With Measure`
-lldcdf<-data.frame(lldc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-lldc_plot<-plot_ly(data = lldcdf, type='bar',x=~Measure.code,y=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LLDC"))
-
-ldc_lldc<-tracker%>%filter(Category=='LDC, LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-ldc_lldc$`Without Measure`<-17-ldc_lldc$`With Measure`
-ldc_lldcdf<-data.frame(ldc_lldc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-ldc_lldc_plot<-plot_ly(data = ldc_lldcdf, type='bar',x=~Measure.code,y=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,LLDC"))
-
-otherdc<-tracker%>%filter(Category=='Other developing country')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-otherdc$`Without Measure`<-61-otherdc$`With Measure`
-otherdcdf<-data.frame(otherdc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-otherdc_plot<-plot_ly(data =otherdcdf, type='bar',x=~Measure.code,y=~value, color = ~variable, colors = 'Reds', showlegend=T)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"))
-
-
-plotly::subplot(ldc_plot,sids_plot,ldc_sids_plot,lldc_plot,ldc_lldc_plot,otherdc_plot, titleX = T,shareY = T)%>% layout(barmode = 'stack', showlegend = TRUE)
-
-
-```
-### Measures by Country Category (with gaps) - view 2
-```{r}
-ldc<-tracker%>%filter(Category=='LDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-ldc$`Without Measure`<-21-ldc$`With Measure`
-ldcdf<-data.frame(ldc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-ldc_plot<-plot_ly(data = ldcdf, type='bar',y=~Measure.code,x=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC"))
-
-sids<-tracker%>%filter(Category=='SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-sids$`Without Measure`<-32-sids$`With Measure`
-sidsdf<-data.frame(sids)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-sids_plot<-plot_ly(data =sidsdf, type='bar',y=~Measure.code,x=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "SIDS"))
-
-ldc_sids<-tracker%>%filter(Category=='LDC, SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-ldc_sids$`Without Measure`<-8-ldc_sids$`With Measure`
-ldc_sidsdf<-data.frame(ldc_sids)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-ldc_sids_plot<-plot_ly(data = ldc_sidsdf, type='bar',y=~Measure.code,x=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,SIDS"))
-
-lldc<-tracker%>%filter(Category=='LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-lldc$`Without Measure`<-15-lldc$`With Measure`
-lldcdf<-data.frame(lldc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-lldc_plot<-plot_ly(data = lldcdf, type='bar',y=~Measure.code,x=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LLDC"))
-
-ldc_lldc<-tracker%>%filter(Category=='LDC, LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-ldc_lldc$`Without Measure`<-17-ldc_lldc$`With Measure`
-ldc_lldcdf<-data.frame(ldc_lldc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-ldc_lldc_plot<-plot_ly(data = ldc_lldcdf, type='bar',y=~Measure.code,x=~value, color = ~variable, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,LLDC"))
-
-otherdc<-tracker%>%filter(Category=='Other developing country')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
-  summarise('With Measure'=sum(n))
-otherdc$`Without Measure`<-61-otherdc$`With Measure`
-otherdcdf<-data.frame(otherdc)%>%reshape::melt(id.vars = c("Measure","Measure.code"))
-otherdc_plot<-plot_ly(data =otherdcdf, type='bar',y=~Measure.code,x=~value, color = ~variable, colors = 'Reds', showlegend=T)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"))
-
-
-plotly::subplot(ldc_plot,sids_plot,ldc_sids_plot,lldc_plot,ldc_lldc_plot,otherdc_plot, titleY = T,shareY = T,titleX = T,shareX = T,margin =0.01)%>% layout(barmode = 'stack', showlegend = TRUE)
-
-
+  plot_ly(data=country_red, type='bar', 
+          y=~countryname,
+          x=~Total)%>%
+    plotly::layout(title='Readiness Amount Approved - by Country',yaxis=list(title='Country'), xaxis=list(title='Readiness Amount Approved (Million USD)'))
 ```
 
-
-Summary by Elements
-=======================================================================
-{data-width=350}
------------------------------------------------------------------------
-
-### Elements by Country Category
->__multiple duplication - very misguiding - to explore further__
+### Project Funding
 
 ```{r}
 
-ldc<-tracker%>%filter(Category=='LDC')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC"))
+country_proj<-GCF_merge%>%dplyr::filter(`Total GCF financing (projects)`>0.0)%>%group_by(countryname)%>%summarise('Total'=sum(
+  `Total GCF financing (projects)`
+))
 
+country_proj$countryname <- factor(country_proj$countryname, levels = unique(country_proj$countryname)[order(country_proj$Total, decreasing = F)])
 
-sids<-tracker%>%filter(Category=='SIDS')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "SIDS"))
-
-
-ldc_sids<-tracker%>%filter(Category=='LDC, SIDS')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=T)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,SIDS"))
-
-
-lldc<-tracker%>%filter(Category=='LLDC')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LLDC"))
-
-
-ldc_lldc<-tracker%>%filter(Category=='LDC, LLDC')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LDC,LLDC"))
-
-
-otherdc<-tracker%>%filter(Category=='Other developing country')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"))
-
-
-plotly::subplot(ldc,sids,ldc_sids,lldc,ldc_lldc,otherdc, titleX = T,shareY = T)%>% layout(barmode = 'stack', showlegend = TRUE)
-
+  plot_ly(data=country_proj, type='bar', 
+          y=~countryname,
+          x=~Total)%>%
+    plotly::layout(title='Total Project Financing - by Country',yaxis=list(title='Country'), xaxis=list(title='Project Amount (\'000 USD)'))
 ```
-
-### Elements by Region
+column {data-width=650}  
+-------------------------------------------------------------------
+### Projects
+__To do:__ check if we have links to project websites or project files somewhere
 
 ```{r}
+library(DT)
+#GCF_projects$`Project Name`<-paste('<a href=',GCF_projects$Link, '>',GCF_projects$`Project Name`,'</a>', sep = "")
 
-africa<-tracker%>%filter(Region=='Africa')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Africa"))
+colnames(GCF_projects)[colnames(GCF_projects)=='countryname']<-'Country'
+colnames(GCF_projects)[colnames(GCF_projects)=='Region_init']<-'Region'
 
+proj<-GCF_projects[,c(2,3,5,8,10)]
+datatable(proj,filter = 'top',selection = 'multiple',callback = JS("return table;"), fillContainer = T,rownames = F, editable = F, style = 'jqueryui', class = 'display responsive', width = '100%', caption = "GCF Projects", extensions = 'Buttons', options=list(initComplete = JS("function(settings, json) {$(this.api().table().header()).css({'font-size' : '70%'});}"),pageLength= 5, dom='lfrtipB', buttons = c('copy', 'csv', 'excel', 'pdf')), escape = F)%>%
+  DT::formatStyle(columns = colnames(proj),fontSize= '12px')
 
-asia_pacific<-tracker%>%filter(Region=='Asia-Pacific')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Asia-Pacific"))
-
-
-lac<-tracker%>%filter(Region=='LAC')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=T)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LAC"))
-
-
-eu<-tracker%>%filter(Region=='Eastern Europe')%>% group_by(Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))%>%
-plot_ly(type='bar',x=~Element,y=~Countries, color = ~Element, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Eastern Europe"))
-
-
-plotly::subplot(africa, asia_pacific,lac,eu, titleX = T,shareY = T)%>% layout(barmode = 'stack', showlegend = TRUE)
 
 ```
 
 
 Explore with pivot table
 =================================================
+__Hint__
+Select desired graphic to draw from the drop-down menu on the first column   
+Drag-&-Drop the variable(s) of interest from the first column into the second column,    
+Then from the drop down menu on the second column select how you want to represent your values e.g as a Count, Sum, List, etc   
+
 ```{r}
-library(rpivotTable)
-rpivotTable(tracker)
-
+rpivotTable(data=tracker, cols =~Country,   rendererName ='Horizontal Stacked Bar Chart' )
+#rows = ~Measure,vals = 'Measure', aggregatorName = 'Count Unique Values',
 ```
-
 
 
 
