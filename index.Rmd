@@ -58,15 +58,17 @@ Progress to Formulate & Implement NAPS
 ```{r}
 measures$Measure<-factor(measures$Measure, levels = unique(measures$Measure)[order(measures$Code, decreasing = TRUE)])
 
-fig <- plot_ly(measures, x = ~LDCs, y = ~Measure, type = 'bar', orientation = 'h',name = 'LDCs',
-        marker = list(color = 'rgba(38, 24, 74, 0.8)',
-                      line = list(color = 'rgb(248, 248, 249)', width = 1))) 
+fig <- plot_ly(measures, x = ~LDCs, y = ~Measure, type = 'bar', orientation = 'h', name = 'LDCs',
+        marker = list(color = 'rgba(38, 24, 74, 0.8)')) 
+
+#,line = list(color = 'rgb(248, 248, 249)', width = 1)
 fig <- fig %>% add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries  (non-LDC)', marker = list(color = 'rgba(71, 68, 131, 0.85)')) 
 
 fig <- fig %>% add_trace(x = ~`Without Measure`,name='Without Measure', marker = list(color = 'rgba(164, 163, 204, 0.95)')) 
 fig <- fig %>% layout(xaxis = list(title = "No. of Countries",
                       showgrid = TRUE,
                       showline = FALSE,
+                      showtext=T,
                       showticklabels = TRUE,
                       zeroline = FALSE,
                       domain = c(0.15, 1)),
@@ -86,13 +88,28 @@ fig <- fig %>% add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measur
                   text = paste(measures$Code, '-',substr(measures$Measure, 1,40), '..'),
                   font = list(family = 'Arial', size = 12,
                             color = 'rgb(67, 67, 67)'),
-                  showarrow = FALSE, align = 'right') 
+                  showarrow = FALSE, align = 'center') 
+
+
+ 
+#add_annotations(text = paste0(df$percentage, "%"), x = df$QuarterYear, 
+                 # y = unlist(tapply(df$percentage, df$QuarterYear, FUN=cumsum))-(df$percentage/2), 
+                  #showarrow = FALSE)
 
 
  
 
 
- 
+
+fig<-fig%>%add_annotations(text = measures$`Developing Countries  (non-LDC)`,x=~`Developing Countries  (non-LDC)`,y=~Measure,
+                           font=list(family='Arial', size=10, textposition='middle', align='right',color='white'),showarrow=FALSE)
+
+fig<-fig%>%add_annotations(text = measures$`Without Measure`,x=~`Without Measure`,y=~Measure,
+                           font=list(family='Arial', size=10, textposition='middle', align='right',color='white'),showarrow=FALSE)
+fig<-fig%>%add_annotations(text = measures$LDCs,x=~LDCs,y=~Measure,
+                           font=list(family='Arial', size=10, textposition='bottom', align='right',color='white'),showarrow=FALSE)
+
+
 
 fig
 
@@ -291,7 +308,7 @@ GCF_cat$Category2 <- factor(GCF_cat$Category2, levels = unique(GCF_cat$Category2
     plotly::layout(title='Total GCF Amount Approved - by Country Category',xaxis=list(title='Category'), yaxis=list(title='Total Amount ((Million USD)'))
 ```
 
-### Total Funding - by Country/ Category2
+#### Total Funding - by Country/ Category2
 ```{r}
 
 ldc<-GCF_merge%>%filter(Category2=='LDC')%>% filter(`Grand Total`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total`))
@@ -309,6 +326,25 @@ otherdc_plot<-plot_ly(otherdc,type='bar',x=~countryname,y=~Total, color = ~Categ
 subplot(ldc_plot, otherdc_plot, titleX = T, titleY = T, shareY = T)%>%layout(barmode='stack')
 
 ```
+### Total Funding - LDC
+```{r}
+ldc<-GCF_merge%>%filter(Category2=='LDC')%>% filter(`Grand Total`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total`))
+ldc$countryname <- factor(ldc$countryname, levels = unique(ldc$countryname)[order(ldc$Total, decreasing = TRUE)])
+
+plot_ly(ldc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = ""),yaxis=list(title='Total Amount ((Million USD)'))
+```
+
+### Total Funding - Other DC
+```{r}
+otherdc<-GCF_merge%>%filter(Category2=='Other developing country')%>% filter(`Grand Total`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total`))
+otherdc$countryname <- factor(otherdc$countryname, levels = unique(otherdc$countryname)[order(otherdc$Total, decreasing = TRUE)])
+
+plot_ly(otherdc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = ""),yaxis=list(title='Total Amount ((Million USD)'))
+```
+
+
 GCF - Other
 =====================================================
 {data-orientation=columns}
