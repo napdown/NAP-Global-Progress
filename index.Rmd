@@ -117,14 +117,12 @@ fig
 
 
 
-
-
-
-
 Select Measures
 =========================================================================================
 {.tabset }
 ---------------------------------------------
+
+
 ### Important Measures -  general
 
 ```{r}
@@ -237,6 +235,19 @@ plotly::subplot(ldc_plot,otherdc_plot, titleX = T,shareY = T)%>% layout(barmode 
 
 ```
 
+### Measures Select- Outlook
+
+```{r}
+mshort<-selected_measures[,c(3,5,6,7,8,19)]%>%group_by(Measure, Category2, `Measure code`)%>%count(Country)%>%summarise("Countries"=sum(n))
+mshort$`Measure code`<-factor(mshort$`Measure code`, levels = unique(mshort$`Measure code`)[order(mshort$`Measure code`, decreasing = TRUE)])
+#mshort%>%group_by(Measure)%>%count(Country)%>%summarise("Countries"=sum(n))
+plot_ly(mshort, type='bar', x=~Countries, y=paste(mshort$`Measure code`,':', substr(mshort$Measure, 1, 40), '...'), fill=~Category2, color = ~Category2)%>%plotly::layout(barmode='stack')
+
+#ggplot(mshort)+
+ # geom_bar(stat = 'identity', aes(x=Countries, y=paste(mshort$`Measure code`, ':', substr(mshort$Measure, 1, 40), '...'), fill=Category2, #colour=Category2))
+```
+
+
 Find full of measures[here](do we have a sharable link for the measures?)
 
 NAP Submissions
@@ -286,7 +297,7 @@ country_tot$countryname <- factor(country_tot$countryname, levels = unique(count
 p<-ggplot(country_tot)+
   geom_bar(stat='identity', aes(x=countryname,y=Total), colour='white',fill='blue')+
   labs(x='Country', y='Amount Accessed (Million USD)')+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 13), axis.text.y = element_text(size = 13), axis.title.y = element_text(size = 13), axis.title.x = element_blank())
 ggplotly(p)
 
 ```
@@ -298,7 +309,7 @@ ldc<-GCF_merge%>%filter(Category2=='LDC')%>% filter(`Grand Total`>0.0)%>% group_
 ldc$countryname <- factor(ldc$countryname, levels = unique(ldc$countryname)[order(ldc$Total, decreasing = TRUE)])
 
 plot_ly(ldc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = ""),yaxis=list(range=c(0,450), title='Total Amount ((Million USD)'))
+  plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=18)),yaxis=list(range=c(0,450), tickfont=list(size=18), title='Total Amount ((Million USD)', titlefont=list(size=18)))
 ```
 
 ### Total Funding - Other DC
@@ -307,7 +318,7 @@ otherdc<-GCF_merge%>%filter(Category2=='Other developing country')%>% filter(`Gr
 otherdc$countryname <- factor(otherdc$countryname, levels = unique(otherdc$countryname)[order(otherdc$Total, decreasing = TRUE)])
 
 plot_ly(otherdc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = ""),yaxis=list(title='Total Amount ((Million USD)'))
+ plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=15.5)),yaxis=list(range=c(0,450), tickfont=list(size=15.5), title='Total Amount ((Million USD)', titlefont=list(size=15.5)))
 ```
 
 
