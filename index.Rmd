@@ -50,19 +50,26 @@ xycountrycode<-merge(unregions,latlong, by='countryname', all.x = TRUE)
 NAP_Countries<-merge(NAPS,xycountrycode, by="countryname", all.x = TRUE)
 ```
 
+
+
+
 Progress to Formulate & Implement NAPS
 ==================================================================================
+{.tabset}
+-------------------------------------------------------------
 
 ### Measures General Outlook
 
 ```{r}
-measures$Measure<-factor(measures$Measure, levels = unique(measures$Measure)[order(measures$Code, decreasing = TRUE)])
+measures$Measure1wrap<-sapply(measures$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 79), collapse = "<br>")})
 
-fig <- plot_ly(measures, x = ~LDCs, y = ~Measure, type = 'bar', orientation = 'h',  name = 'LDCs',
+measures$Measure1wrap<-factor(measures$Measure1wrap, levels = unique(measures$Measure1wrap)[order(measures$Code, decreasing = TRUE)])
+
+fig <- plot_ly(measures, x = ~LDCs, y = ~Measure1wrap, type = 'bar', orientation = 'h',  name = 'LDCs',
         marker = list(color = 'rgba(38, 24, 74, 0.8)'),text=~LDCs, textposition= 'top  right',textfont=list(size=12, color='white')) 
 
 #,line = list(color = 'rgb(248, 248, 249)', width = 1)
-fig <- fig %>% add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries  (non-LDC)', marker = list(color = 'rgba(71, 68, 131, 0.85)'),text=~`Developing Countries  (non-LDC)`, textposition= 'right',textfont=list(size=12, color='white')) 
+fig <- fig %>% add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries  (non-LDC)',  marker = list(color = 'rgba(71, 68, 131, 0.85)'),text=~`Developing Countries  (non-LDC)`, textposition= 'right',textfont=list(size=12, color='white')) 
 
 fig <- fig %>% add_trace(x = ~`Without Measure`,name='Without Measure', marker = list(color = 'rgba(164, 163, 204, 0.95)'),text=~`Without Measure`, textposition= 'middle left',textfont=list(size=12, color='white')) 
 fig <- fig %>% layout(xaxis = list(title = "No. of Countries",
@@ -83,26 +90,97 @@ fig <- fig %>% layout(xaxis = list(title = "No. of Countries",
          showlegend = TRUE, legend=list(orientation='h', x=0.2,y=-0.15))
 
 # label yaxis
-fig <- fig %>% add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure,
+fig <- fig %>% add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure1wrap,
                   xanchor = 'right',
-                  text = paste(measures$Code, '-',measures$Measure1),
+                  text = measures$Measure1wrap,
                   font = list(family = 'Arial', size = 12,
                             color = 'rgb(67, 67, 67)'),
                   showarrow = FALSE, align = 'center') 
 
 
- 
-#add_annotations(text = paste0(df$percentage, "%"), x = df$QuarterYear, 
-                 # y = unlist(tapply(df$percentage, df$QuarterYear, FUN=cumsum))-(df$percentage/2), 
-                  #showarrow = FALSE)
-
-
- 
 
 fig
 
 ```
 
+### Measures Outlook - Grouped
+```{r}
+A <- list(
+  x = 2.5,
+  y = 30,
+  text = "Laying the groundwork \nand addressing gaps",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+B <- list(
+  x = 2.5,
+  y = 30,
+  text = "Preparatory elements",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+C <- list(
+  x = 2.0,
+  y = 30,
+  text = "Implementation strategies",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+D <- list(
+  x = 2.0,
+  y = 30,
+  text = "Reporting, monitoring and review",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+
+mdf<-as.data.frame(measures[,c(1,4,5,7,6,8)])%>%reshape::melt(id.vars=c('Element', 'Measure1', 'Code'))
+
+mdf$Measure1wrap<-sapply(mdf$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 45), collapse = "<br>")})
+
+mdf$Measure1<-factor(mdf$Measure1, levels = unique(mdf$Measure1)[order(mdf$Code, decreasing = F)])
+
+mdf$Element<-factor(mdf$Element)
+
+#levels(mdf$Element)<-c("A. Laying the groundwork and addressing gaps","B. Preparatory elements","C. Implementation strategies","D. Reporting, monitoring and review")
+
+plotA<-mdf%>%filter(Element=="A. Laying the groundwork and addressing gaps")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap, color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'),text=~value, textposition= 'middle',textfont=list(size=12, color='white'), showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "A. Laying the groundwork and addressing gaps"),yaxis=list(title='No. of Countries'))
+
+plotB<-mdf%>%filter(Element=="B. Preparatory elements")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'bottom middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'), showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "B. Preparatory elements"),yaxis=list(title='No. of Countries'))
+
+plotC<- mdf%>%filter(Element=="C. Implementation strategies")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'), showlegend=F)%>%
+  plotly::layout(barmode='stack', xaxis = list(title = "C. Implementation strategies"),yaxis=list(title='No. of Countries'))
+
+plotD<-mdf%>%filter(Element=="D. Reporting, monitoring and review")%>% plot_ly(type='bar',y=~value,x=~Measure1wrap, text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'), showlegend=T)%>%
+  plotly::layout(legend=list(orientation='h', x=0.3, y=1.05), barmode='stack', xaxis = list(title = "D. Reporting, monitoring and review"),yaxis=list(title='No. of Countries'))
+
+
+subplot(plotA, plotB,plotC, plotD, shareY = T, shareX = T, titleY = T, margin = 0.01)%>%layout(barmode='stack')
+
+
+```
 
 
 Select Measures
@@ -113,12 +191,13 @@ Select Measures
 ```{r}
 mselect<-measures%>%dplyr::filter(Code=='A1'|Code=='A2'|Code=='A3'|Code=='A8'|Code=='A9'|Code=='B3'|Code=='B7'|Code=='C3'|Code=='D4')
 
-mselect$Measure<-factor(mselect$Measure, levels = unique(mselect$Measure)[order(mselect$Code, decreasing = TRUE)])
+mselect$Measure1<-factor(mselect$Measure1, levels = unique(mselect$Measure1)[order(mselect$Code, decreasing = TRUE)])
 
-fig <- plot_ly(mselect, x = ~LDCs, y = ~Measure, type = 'bar', orientation = 'h', text=~LDCs, textposition= 'left',textfont=list(size=12, color='white'), name = 'LDCs',
+mselect$Measure1wrap<-sapply(mselect$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 60), collapse = "<br>")})
+
+fig <- plot_ly(mselect, x = ~LDCs, y = ~Measure1, type = 'bar', orientation = 'h', text=~LDCs, textposition= 'left',textfont=list(size=12, color='white'), name = 'LDCs',
         marker = list(color = 'rgba(38, 24, 74, 0.8)')) 
 
-#,line = list(color = 'rgb(248, 248, 249)', width = 1)
 fig <- fig %>% add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries (non-LDC)', marker = list(color = 'rgba(71, 68, 131, 0.85)'),text=~`Developing Countries  (non-LDC)`, textposition= 'right',textfont=list(size=12, color='white')) 
 
 fig <- fig %>% add_trace(x = ~`Without Measure`,name='Without Measure', marker = list(color = 'rgba(164, 163, 204, 0.95)'),text=~`Without Measure`, textposition= 'middle',textfont=list(size=12, color='white')) 
@@ -140,9 +219,9 @@ fig <- fig %>% layout(xaxis = list(title = "No. of Countries",
          showlegend = TRUE, legend=list(orientation='h', x=0.2,y=-0.15))
 
 # label yaxis
-fig <- fig %>% add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure,
+fig <- fig %>% add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure1,
                   xanchor = 'right',
-                  text = paste(mselect$Code, '-',mselect$Measure),
+                  text = mselect$Measure1wrap,
                   font = list(family = 'Arial', size = 12,
                             color = 'rgb(67, 67, 67)'),
                   showarrow = FALSE, align = 'center') 
@@ -162,7 +241,11 @@ selected_measures<-tracker_merge%>%dplyr::filter(`Measure code`=='A1'|`Measure c
 
 df<-selected_measures%>%group_by(Element,Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-plot_ly(df,type='bar',x=paste(df$`Measure code`, substr(df$Measure, 1,40), '...', sep = '-'),y=~Countries, text=~Countries, textposition='auto', color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+
+df$Measurewrap<-sapply(df$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 40), collapse = "<br>")})
+df$Measurewrap<-factor(df$Measurewrap, levels = unique(df$Measurewrap)[order(df$`Measure code`,decreasing = F)])
+
+plot_ly(df,type='bar',x=~Measurewrap, y=~Countries, text=~Countries, textposition='auto', color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "Measure"),yaxis=list(title='No. of Countries'))
 
 ```
@@ -172,31 +255,100 @@ plot_ly(df,type='bar',x=paste(df$`Measure code`, substr(df$Measure, 1,40), '...'
 
 ```{r}
 
+aftitle <- list(
+  x = 2.5,
+  y = 30,
+  text = "Africa",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+asiatitle <- list(
+  x = 2.5,
+  y = 30,
+  text = "Asia-Pacific",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+lactitle <- list(
+  x = 2.5,
+  y = 30,
+  text = "Latin America &\nthe Caribbean",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+eutitle <- list(
+  x = 2.5,
+  y = 30,
+  text = "Eastern Europe",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+
 africa<-selected_measures%>%filter(Region=='Africa')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-af_plot<-plot_ly(africa,type='bar',x=paste(africa$`Measure code`, substr(africa$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Africa"),yaxis=list(title='No. of Countries'))
+
+africa$Measurewrap<-sapply(africa$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 55), collapse = "<br>")})
+
+africa$Measurewrap<-factor(africa$Measurewrap, levels = unique(africa$Measurewrap)[order(africa$`Measure code`,decreasing = F)])
+
+af_plot<-plot_ly(africa,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(annotations=aftitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T, linecolor='black',mirror=F, linewidth=2))
 
 
 asia_pacific<-selected_measures%>%filter(Region=='Asia-Pacific')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-asia_plot<-plot_ly(asia_pacific, type='bar',x=paste(asia_pacific$`Measure code`, substr(asia_pacific$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Asia-Pacific"),yaxis=list(title='No. of Countries'))
+
+asia_pacific$Measurewrap<-sapply(asia_pacific$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 55), collapse = "<br>")})
+
+asia_pacific$Measurewrap<-factor(asia_pacific$Measurewrap, levels = unique(asia_pacific$Measurewrap)[order(asia_pacific$`Measure code`,decreasing = F)])
+
+asia_plot<-plot_ly(asia_pacific, type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(annotations=asiatitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T,mirror=F, linecolor='black', linewidth=2))
 
 
 lac<-selected_measures%>%filter(Region=='LAC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-lac_plot<-plot_ly(lac,type='bar',x=paste(lac$`Measure code`, substr(lac$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "LAC"),yaxis=list(title='No. of Countries'))
+
+lac$Measurewrap<-sapply(lac$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 55), collapse = "<br>")})
+
+lac$Measurewrap<-factor(lac$Measurewrap, levels = unique(lac$Measurewrap)[order(lac$`Measure code`,decreasing = F)])
+
+lac_plot<-plot_ly(lac,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(annotations=lactitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T,mirror=F, linecolor='black', linewidth=2))
 
 
 eu<-selected_measures%>%filter(Region=='Eastern Europe')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-eu_plot<-plot_ly(eu,type='bar',x=paste(eu$`Measure code`, substr(eu$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Eastern Europe"),yaxis=list(title='No. of Countries'))
+
+eu$Measurewrap<-sapply(eu$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 55), collapse = "<br>")})
+
+eu$Measurewrap<-factor(eu$Measurewrap, levels = unique(eu$Measurewrap)[order(eu$`Measure code`,decreasing = F)])
+
+eu_plot<-plot_ly(eu,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+  plotly::layout(annotations=eutitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T,mirror=F, linecolor='black', linewidth=2))
 
 
-plotly::subplot(af_plot, asia_plot,lac_plot,eu_plot, titleX = T,shareY = T, margin = 0.02)%>% layout(barmode = 'stack',plot_bgcolor='#e5ecf6')
+plotly::subplot(af_plot, asia_plot,lac_plot,eu_plot, titleX = T,shareY = T, margin = 0.01)%>% layout(barmode = 'stack',plot_bgcolor='#e5ecf6')
 
 ```
 
@@ -248,21 +400,57 @@ plotly::subplot(ldc_plot,sids_plot,ldc_sids_plot,lldc_plot,ldc_lldc_plot,otherdc
 ### By Country Category
 
 ```{r}
+ldctitle <- list(
+  x = 3,
+  y = 35,
+  text = "LDCs",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+otherdctitle <- list(
+  x = 3,
+  y = 35,
+  text = "Other Developing Countries",
+  xref = "x",
+  yref = "y",
+  showarrow = F,
+  arrowhead = 7,
+  ax = 20,
+  ay = -40
+)
+
+
+
 
 ldc<-selected_measures%>%filter(Category2=='LDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-ldc_plot<-plot_ly(ldc,type='bar',x=paste(ldc$`Measure code`, substr(ldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
-  plotly::layout(name = "LDC",barmode='stack', xaxis = list(title = " LDC"),yaxis=list(title='No. of Countries'))
+
+ldc$Measurewrap<-sapply(ldc$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 20), collapse = "<br>")})
+
+ldc$Measurewrap<-factor(ldc$Measurewrap, levels = unique(ldc$Measurewrap)[order(ldc$`Measure code`,decreasing = F)])
+
+ldc_plot<-plot_ly(ldc,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+  plotly::layout(annotations=ldctitle, barmode='stack', xaxis = list(title = " "),yaxis=list(title='No. of Countries'))
 
 
 otherdc<-selected_measures%>%filter(Category2=='Other developing country')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-otherdc_plot<-plot_ly(otherdc,type='bar',x=paste(otherdc$`Measure code`, substr(otherdc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F, name='Other DC')%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "Other DC"),yaxis=list(title='No. of Countries'))
+
+otherdc$Measurewrap<-sapply(otherdc$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 20), collapse = "<br>")})
+
+otherdc$Measurewrap<-factor(otherdc$Measurewrap, levels = unique(otherdc$Measurewrap)[order(otherdc$`Measure code`,decreasing = F)])
+
+otherdc_plot<-plot_ly(otherdc,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F, name='Other DC')%>%
+  plotly::layout(annotations=otherdctitle,barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries'))
 
 
 
-plotly::subplot(ldc_plot,otherdc_plot, titleX = T,shareY = F, margin = 0.05)%>% layout(barmode = 'stack', plot_bgcolor='#e5ecf6', showlegend = F)
+plotly::subplot(ldc_plot,otherdc_plot, titleX = T,shareY = T, margin = 0.01)%>% layout(barmode = 'stack', plot_bgcolor='#e5ecf6', showlegend = F)
 
 
 ```
@@ -287,16 +475,20 @@ NAP Submissions
 
 ### Countries with submitted NAPS
 
-```{r}
+```{r, warning=FALSE, message=F}
+
 
 NAP_Countries$`Document title`<-paste('<a href=',NAP_Countries$Link, '>',NAP_Countries$`Document title`,'</a>', sep = "")
 
 NAP_Countries<-NAP_Countries%>%
    mutate(popup_info=paste(countryname,"<br>","Submitted on:",NAP_Countries$`Date of submission`,"<br>","Title:",NAP_Countries$`Document title`))
 
-leaflet(NAP_Countries)%>%setView(lng= 35.79, lat= -10 , zoom = 2.42)%>%
+leaflet(NAP_Countries)%>%setView(lng= 35.79, lat= -9.71 , zoom = 2.5)%>%
   addTiles()%>%
-  addCircleMarkers(data=NAP_Countries, fill=T,lng=~lon, lat =~lat, radius = 6, color='red', popup =~popup_info)
+  setMaxBounds(0,-60,90,60)%>%
+  addCircleMarkers(data=NAP_Countries, fill=T,lng=~lon, lat =~lat, radius = 6, color='red', popup =~popup_info)%>%
+  addMiniMap()
+ 
  
 ```
 
@@ -397,7 +589,7 @@ country_proj$countryname <- factor(country_proj$countryname, levels = unique(cou
   plot_ly(data=country_proj, type='bar', 
           y=~countryname,
           x=~Total)%>%
-    plotly::layout(title='Total Project Financing - by Country',yaxis=list(title=''), xaxis=list(title='Project Amount (\'000 USD)'))
+    plotly::layout(title='Total Project Financing - by Country',yaxis=list(title=''), xaxis=list(title='Project Amount ((Million USD)'))
 ```
 
 Projects
@@ -413,7 +605,7 @@ colnames(GCF_projects)[colnames(GCF_projects)=='countryname']<-'Country'
 colnames(GCF_projects)[colnames(GCF_projects)=='Region_init']<-'Region'
 
 proj<-GCF_projects[,c(2,3,5,8,10)]
-datatable(proj,filter = 'top',selection = 'multiple',callback = JS("return table;"), fillContainer = T,rownames = F, editable = F, style = 'jqueryui', class = 'display responsive', width = '100%', caption = "GCF Projects", extensions = 'Buttons', options=list(initComplete = JS("function(settings, json) {$(this.api().table().header()).css({'font-size' : '70%'});}"),pageLength= 5, dom='lfrtipB', buttons = c('copy', 'csv', 'excel', 'pdf')), escape = F)%>%
+datatable(proj,filter = 'top',selection = 'multiple',callback = JS("return table;"), fillContainer = T,rownames = F, editable = F, style = 'jqueryui', class = 'display responsive', width = '100%', caption = "GCF Projects", extensions = 'Buttons', options=list(initComplete = JS("function(settings, json) {$(this.api().table().header()).css({'font-size' : '70%'});}"),pageLength= 10, dom='lfrtipB', buttons = c('copy', 'csv', 'excel', 'pdf')), escape = F)%>%
   DT::formatStyle(columns = colnames(proj),fontSize= '12px')
 
 
