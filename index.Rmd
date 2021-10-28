@@ -674,9 +674,8 @@ plot_ly(del_p, type = 'bar', y=~`Delivery Partner_long`, x=~`Total Disbursed`, n
 ```
 
 
-Projects
-======================================================
-### Projects
+
+##### Projects
 __To do:__ check if we have links to project websites or project files somewhere
 
 ```{r}
