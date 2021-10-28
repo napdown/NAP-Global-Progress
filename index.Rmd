@@ -1,5 +1,5 @@
 ---
-title: "NAP Progress - Aggregate"
+title: "NAP Global Progress "
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -36,6 +36,7 @@ country_codes_un <- read_excel("Open_NAPs_Database.xlsm",sheet = "country_codes_
 regions <- read_excel("Open_NAPs_Database.xlsm", sheet = "UNCTAD_Regions")
 iso_cat<-read_excel("Open_NAPs_Database.xlsm",sheet = "country_categories")
 latlong <- read_excel("Open_NAPs_Database.xlsm",sheet = "countrylatlong")
+Readiness<- read_excel("Open_NAPs_Database.xlsm",sheet = "Readiness")%>%dplyr::filter(Activity=='Adaptation Planning (AP)')
 
 #merge
 GCF_merge<-merge(GCF_accessed, categories, by='countryname', all.x = T)
@@ -158,11 +159,7 @@ mdf<-as.data.frame(measures[,c(1,4,5,7,6,8)])%>%reshape::melt(id.vars=c('Element
 
 mdf$Measure1wrap<-sapply(mdf$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 45), collapse = "<br>")})
 
-mdf$Measure1<-factor(mdf$Measure1, levels = unique(mdf$Measure1)[order(mdf$Code, decreasing = F)])
-
-mdf$Element<-factor(mdf$Element)
-
-#levels(mdf$Element)<-c("A. Laying the groundwork and addressing gaps","B. Preparatory elements","C. Implementation strategies","D. Reporting, monitoring and review")
+mdf$Measure1wrap<-factor(mdf$Measure1wrap, levels = unique(mdf$Measure1wrap)[order(mdf$Code, decreasing = F)])
 
 plotA<-mdf%>%filter(Element=="A. Laying the groundwork and addressing gaps")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap, color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'),text=~value, textposition= 'middle',textfont=list(size=12, color='white'), showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "A. Laying the groundwork and addressing gaps"),yaxis=list(title='No. of Countries'))
@@ -170,16 +167,67 @@ plotA<-mdf%>%filter(Element=="A. Laying the groundwork and addressing gaps")%>%p
 plotB<-mdf%>%filter(Element=="B. Preparatory elements")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'bottom middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'), showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "B. Preparatory elements"),yaxis=list(title='No. of Countries'))
 
-plotC<- mdf%>%filter(Element=="C. Implementation strategies")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'), showlegend=F)%>%
+plotC<- mdf%>%filter(Element=="C. Implementation strategies")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'),bargap=0.1, showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "C. Implementation strategies"),yaxis=list(title='No. of Countries'))
 
-plotD<-mdf%>%filter(Element=="D. Reporting, monitoring and review")%>% plot_ly(type='bar',y=~value,x=~Measure1wrap, text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'), showlegend=T)%>%
+plotD<-mdf%>%filter(Element=="D. Reporting, monitoring and review")%>% plot_ly(type='bar',y=~value,x=~Measure1wrap, text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'),autosize=F,  showlegend=T)%>%
   plotly::layout(legend=list(orientation='h', x=0.3, y=1.05), barmode='stack', xaxis = list(title = "D. Reporting, monitoring and review"),yaxis=list(title='No. of Countries'))
 
 
 subplot(plotA, plotB,plotC, plotD, shareY = T, shareX = T, titleY = T, margin = 0.01)%>%layout(barmode='stack')
 
 
+```
+
+###### ggplot - delete
+
+```{r}
+library(gridExtra)
+library(grid)
+library(gtable)
+mdf$Measure1wrap<-sapply(mdf$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 35), collapse = "\n")})
+
+mdf$Measure1wrap<-factor(mdf$Measure1wrap, levels = unique(mdf$Measure1wrap)[order(mdf$Code, decreasing = T)])
+
+a<-mdf%>%filter(Element=="A. Laying the groundwork and addressing gaps")%>%
+  ggplot()+
+  geom_bar(aes(y=Measure1wrap, x=value, fill=variable, text = value, textposition='top'), stat = 'identity', position = 'stack')+
+  labs(x='', y='A. Laying the \ngroundwork and \naddressing gaps')+
+  theme(legend.position = 'none',axis.text.x = element_blank(),  axis.ticks.x = element_blank())
+b<-mdf%>%filter(Element=="B. Preparatory elements")%>%
+  ggplot()+
+  geom_bar(aes(y=Measure1wrap, x=value, fill=variable), stat = 'identity', position = 'stack')+
+  labs(x='', y='B. Preparatory\n elements')+
+  theme(legend.position = 'none',axis.text.x = element_blank(),  axis.ticks.x = element_blank())
+c<-mdf%>%filter(Element=="C. Implementation strategies")%>%
+  ggplot()+
+  geom_bar(aes(y=Measure1wrap, x=value, fill=variable), stat = 'identity', position = 'stack')+
+  labs(x='', y='C. Implementation\n strategies')+
+  theme(legend.position = 'none',axis.text.x = element_blank(),  axis.ticks.x = element_blank())
+d<-mdf%>%filter(Element=="D. Reporting, monitoring and review")%>%
+  ggplot()+
+  geom_bar(aes(y=Measure1wrap, x=value, fill=variable), stat = 'identity', position = 'stack')+
+  labs(x='No. of Countries', y='D. Reporting,\n monitoring \n and review')+
+  theme(legend.position = 'bottom', legend.direction = 'horizontal', legend.title = element_blank())
+
+
+#grid.arrange(a,b,c,d, nrow=4, ncol=1)
+a1<-ggplotGrob(a)
+b1<-ggplotGrob(b)
+c1<-ggplotGrob(c)
+d1<-ggplotGrob(d)
+g<-rbind(a1,b1,c1,d1, size='last')
+g$widths <- unit.pmax(a1$widths, b1$widths,c1$widths, d1$widths)
+grid.newpage()
+grid.draw(g)
+
+```
+
+###### OTHER G 
+```{r}
+ggplot(mdf)+
+  geom_bar(stat = 'identity', position = 'stack', aes(x=value, y=Measure1, fill=variable))+
+  facet_grid(vars(Element) )
 ```
 
 
@@ -557,10 +605,10 @@ write.table(otherdc1, file = 'otherdc1.csv', sep = "", row.names = F)
 ```
 
 
-GCF - Other
+Readiness
 =====================================================
-{data-orientation=columns}
------------------------------------------------------
+{.tabset}
+---------------------------------------------------------------
 
 ### Readiness
 
@@ -576,7 +624,7 @@ country_red$countryname <- factor(country_red$countryname, levels = unique(count
     plotly::layout(title='Readiness Amount Approved - by Country',yaxis=list(title=''), xaxis=list(title='Readiness Amount Approved (Million USD)'))
 ```
 
-### Project Funding
+##### Project Funding
 
 ```{r}
 
@@ -591,6 +639,40 @@ country_proj$countryname <- factor(country_proj$countryname, levels = unique(cou
           x=~Total)%>%
     plotly::layout(title='Total Project Financing - by Country',yaxis=list(title=''), xaxis=list(title='Project Amount ((Million USD)'))
 ```
+
+
+
+### Readiness Amount by Delivery partner
+
+```{r, fig.width=20}
+tot<-Readiness%>%
+  group_by(`Delivery Partner`,`Delivery Partner_long` )%>%
+  summarise("Total Approved"=sum(`Amount Approved`))
+
+mylabel <- paste(tot$`Delivery Partner`,paste('$',prettyNum(format(tot$`Total Approved`,big.mark = ","), "", sep = ",")),  sep = " \n")
+
+plot_ly(tot)%>%
+  add_pie(hole=0.4, labels = ~`Delivery Partner_long`, values = ~`Total Approved`, text=mylabel, textinfo='text',rotation=-270) %>%
+  layout(title="Readiness Amount Approved - by Delivery Partner",
+           legend=list(orientation='h', x=0, y=-0.9))
+```
+
+
+
+### Readiness Amount Approved/Disbursed - by delivery partner
+```{r}
+del_p<-Readiness%>%
+  group_by(`Delivery Partner_long`)%>%
+  summarise("Total Approved"=sum(`Amount Approved`), "Total Disbursed"=sum(`Amount Disbursed`))
+
+del_p$`Delivery Partner_long` <- factor(del_p$`Delivery Partner_long`, levels = unique(del_p$`Delivery Partner_long`)[order(del_p$`Total Approved`, decreasing = F)])
+del_p$`Delivery Partner_long` <- factor(del_p$`Delivery Partner_long`, levels = unique(del_p$`Delivery Partner_long`)[order(del_p$`Total Disbursed`, decreasing = F)])
+
+plot_ly(del_p, type = 'bar', y=~`Delivery Partner_long`, x=~`Total Disbursed`, name='Amount Disbursed')%>%
+  add_trace( x=~`Total Approved`,name='Amount Approved')%>%
+  layout(xaxis=list(title='USD Amount'), yaxis=list(title='Delivery Partner'))
+```
+
 
 Projects
 ======================================================
