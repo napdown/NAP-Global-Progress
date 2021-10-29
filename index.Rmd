@@ -161,16 +161,16 @@ mdf$Measure1wrap<-sapply(mdf$Measure1, FUN = function(Measure1){paste(strwrap(Me
 
 mdf$Measure1wrap<-factor(mdf$Measure1wrap, levels = unique(mdf$Measure1wrap)[order(mdf$Code, decreasing = F)])
 
-plotA<-mdf%>%filter(Element=="A. Laying the groundwork and addressing gaps")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap, color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'),text=~value, textposition= 'middle',textfont=list(size=12, color='white'), showlegend=F)%>%
+plotA<-mdf%>%filter(Element=="A. Laying the groundwork and addressing gaps")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap, color = ~variable, colors = c('#261C4A', '#47448A','#A4A3CC'),text=~value, textposition= 'middle',textfont=list(size=12, color='white'), showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "A. Laying the groundwork and addressing gaps"),yaxis=list(title='No. of Countries'))
 
-plotB<-mdf%>%filter(Element=="B. Preparatory elements")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'bottom middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'), showlegend=F)%>%
+plotB<-mdf%>%filter(Element=="B. Preparatory elements")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'bottom middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#261C4A', '#47448A','#A4A3CC'), showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "B. Preparatory elements"),yaxis=list(title='No. of Countries'))
 
-plotC<- mdf%>%filter(Element=="C. Implementation strategies")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'),bargap=0.1, showlegend=F)%>%
+plotC<- mdf%>%filter(Element=="C. Implementation strategies")%>%plot_ly(type='bar',y=~value,x=~Measure1wrap,text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#261C4A', '#47448A','#A4A3CC'), showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "C. Implementation strategies"),yaxis=list(title='No. of Countries'))
 
-plotD<-mdf%>%filter(Element=="D. Reporting, monitoring and review")%>% plot_ly(type='bar',y=~value,x=~Measure1wrap, text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#512679', '#8567a1','#b9a8c9'),autosize=F,  showlegend=T)%>%
+plotD<-mdf%>%filter(Element=="D. Reporting, monitoring and review")%>% plot_ly(type='bar',y=~value,x=~Measure1wrap, text=~value, textposition= 'middle',textfont=list(size=12, color='white'), color = ~variable, colors = c('#261C4A', '#47448A','#A4A3CC'),  showlegend=T)%>%
   plotly::layout(legend=list(orientation='h', x=0.3, y=1.05), barmode='stack', xaxis = list(title = "D. Reporting, monitoring and review"),yaxis=list(title='No. of Countries'))
 
 
@@ -293,7 +293,7 @@ df<-selected_measures%>%group_by(Element,Measure,`Measure code`)%>%count(Country
 df$Measurewrap<-sapply(df$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 40), collapse = "<br>")})
 df$Measurewrap<-factor(df$Measurewrap, levels = unique(df$Measurewrap)[order(df$`Measure code`,decreasing = F)])
 
-plot_ly(df,type='bar',x=~Measurewrap, y=~Countries, text=~Countries, textposition='auto', color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+plot_ly(df,type='bar',x=~Measurewrap, y=~Countries, text=~Countries, textposition='auto', color = ~Measure, colors = 'Blues',legendgroup=~Measure, showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "Measure"),yaxis=list(title='No. of Countries'))
 
 ```
@@ -359,7 +359,7 @@ africa$Measurewrap<-sapply(africa$Measure, FUN = function(Measure){paste(strwrap
 
 africa$Measurewrap<-factor(africa$Measurewrap, levels = unique(africa$Measurewrap)[order(africa$`Measure code`,decreasing = F)])
 
-af_plot<-plot_ly(africa,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+af_plot<-plot_ly(africa,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Blues',legendgroup=~Measure, showlegend=F)%>%
   plotly::layout(annotations=aftitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T, linecolor='black',mirror=F, linewidth=2))
 
 
@@ -370,7 +370,7 @@ asia_pacific$Measurewrap<-sapply(asia_pacific$Measure, FUN = function(Measure){p
 
 asia_pacific$Measurewrap<-factor(asia_pacific$Measurewrap, levels = unique(asia_pacific$Measurewrap)[order(asia_pacific$`Measure code`,decreasing = F)])
 
-asia_plot<-plot_ly(asia_pacific, type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+asia_plot<-plot_ly(asia_pacific, type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Blues',legendgroup=~Measure, showlegend=F)%>%
   plotly::layout(annotations=asiatitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T,mirror=F, linecolor='black', linewidth=2))
 
 
@@ -381,7 +381,7 @@ lac$Measurewrap<-sapply(lac$Measure, FUN = function(Measure){paste(strwrap(Measu
 
 lac$Measurewrap<-factor(lac$Measurewrap, levels = unique(lac$Measurewrap)[order(lac$`Measure code`,decreasing = F)])
 
-lac_plot<-plot_ly(lac,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+lac_plot<-plot_ly(lac,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Blues',legendgroup=~Measure, showlegend=F)%>%
   plotly::layout(annotations=lactitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T,mirror=F, linecolor='black', linewidth=2))
 
 
@@ -392,7 +392,7 @@ eu$Measurewrap<-sapply(eu$Measure, FUN = function(Measure){paste(strwrap(Measure
 
 eu$Measurewrap<-factor(eu$Measurewrap, levels = unique(eu$Measurewrap)[order(eu$`Measure code`,decreasing = F)])
 
-eu_plot<-plot_ly(eu,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+eu_plot<-plot_ly(eu,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Blues',legendgroup=~Measure, showlegend=F)%>%
   plotly::layout(annotations=eutitle, barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries', showline=T,mirror=F, linecolor='black', linewidth=2))
 
 
@@ -406,37 +406,37 @@ plotly::subplot(af_plot, asia_plot,lac_plot,eu_plot, titleX = T,shareY = T, marg
 
 ldc<-selected_measures%>%filter(Category=='LDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-ldc_plot<-plot_ly(ldc,type='bar',x=paste(ldc$`Measure code`, substr(ldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+ldc_plot<-plot_ly(ldc,type='bar',x=paste(ldc$`Measure code`, substr(ldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Blues', showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "LDC"),yaxis=list(title='No. of Countries'))
 
 
 sids<-selected_measures%>%filter(Category=='SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-sids_plot<-plot_ly(sids, type='bar',x=paste(sids$`Measure code`, substr(sids$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+sids_plot<-plot_ly(sids, type='bar',x=paste(sids$`Measure code`, substr(sids$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Blues', showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "SIDS"),yaxis=list(title='No. of Countries'))
 
 
 ldc_sids<-selected_measures%>%filter(Category=='LDC, SIDS')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-ldc_sids_plot<-plot_ly(ldc_sids, type='bar',x=paste(ldc_sids$`Measure code`, substr(ldc_sids$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=T)%>%
+ldc_sids_plot<-plot_ly(ldc_sids, type='bar',x=paste(ldc_sids$`Measure code`, substr(ldc_sids$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Blues', showlegend=T)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "LDC,SIDS"),yaxis=list(title='No. of Countries'))
 
 
 lldc<-selected_measures%>%filter(Category=='LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-lldc_plot<-plot_ly(lldc, type='bar',x=paste(lldc$`Measure code`, substr(lldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+lldc_plot<-plot_ly(lldc, type='bar',x=paste(lldc$`Measure code`, substr(lldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Blues', showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "LLDC"),yaxis=list(title='No. of Countries'))
 
 
 ldc_lldc<-selected_measures%>%filter(Category=='LDC, LLDC')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-ldc_lldc_plot<-plot_ly(ldc_lldc, type='bar',x=paste(ldc_lldc$`Measure code`, substr(ldc_lldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+ldc_lldc_plot<-plot_ly(ldc_lldc, type='bar',x=paste(ldc_lldc$`Measure code`, substr(ldc_lldc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Blues', showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "LDC,LLDC"),yaxis=list(title='No. of Countries'))
 
 
 otherdc<-selected_measures%>%filter(Category=='Other developing country')%>% group_by(Measure,`Measure code`)%>%count(Country)%>%
   summarise('Countries'=sum(n))
-otherdc_plot<-plot_ly(otherdc,type='bar',x=paste(otherdc$`Measure code`, substr(otherdc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Reds',legendgroup=~Measure, showlegend=F)%>%
+otherdc_plot<-plot_ly(otherdc,type='bar',x=paste(otherdc$`Measure code`, substr(otherdc$Measure, 1,40), '...',sep = '-'),y=~Countries, color = ~Measure, colors = 'Blues',legendgroup=~Measure, showlegend=F)%>%
   plotly::layout(barmode='stack', xaxis = list(title = "Other DC"),yaxis=list(title='No. of Countries'))
 
 
@@ -482,7 +482,7 @@ ldc$Measurewrap<-sapply(ldc$Measure, FUN = function(Measure){paste(strwrap(Measu
 
 ldc$Measurewrap<-factor(ldc$Measurewrap, levels = unique(ldc$Measurewrap)[order(ldc$`Measure code`,decreasing = F)])
 
-ldc_plot<-plot_ly(ldc,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F)%>%
+ldc_plot<-plot_ly(ldc,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Blues', showlegend=F)%>%
   plotly::layout(annotations=ldctitle, barmode='stack', xaxis = list(title = " "),yaxis=list(title='No. of Countries'))
 
 
@@ -493,7 +493,7 @@ otherdc$Measurewrap<-sapply(otherdc$Measure, FUN = function(Measure){paste(strwr
 
 otherdc$Measurewrap<-factor(otherdc$Measurewrap, levels = unique(otherdc$Measurewrap)[order(otherdc$`Measure code`,decreasing = F)])
 
-otherdc_plot<-plot_ly(otherdc,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Reds', showlegend=F, name='Other DC')%>%
+otherdc_plot<-plot_ly(otherdc,type='bar',x=~Measurewrap,y=~Countries, color = ~Measure, colors = 'Blues', showlegend=F, name='Other DC')%>%
   plotly::layout(annotations=otherdctitle,barmode='stack', xaxis = list(title = ""),yaxis=list(title='No. of Countries'))
 
 
