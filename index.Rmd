@@ -37,6 +37,8 @@ regions <- read_excel("Open_NAPs_Database.xlsm", sheet = "UNCTAD_Regions")
 iso_cat<-read_excel("Open_NAPs_Database.xlsm",sheet = "country_categories")
 latlong <- read_excel("Open_NAPs_Database.xlsm",sheet = "countrylatlong")
 Readiness<- read_excel("Open_NAPs_Database.xlsm",sheet = "Readiness")%>%dplyr::filter(Activity=='Adaptation Planning (AP)')
+approvals<-read_excel("Open_NAPs_Database.xlsm", sheet = "Readiness_Approval")%>%na.omit()
+
 
 #merge
 GCF_merge<-merge(GCF_accessed, categories, by='countryname', all.x = T)
@@ -672,8 +674,26 @@ plot_ly(del_p, type = 'bar', y=~`Delivery Partner_long`, x=~`Total Disbursed`, n
   add_trace( x=~`Total Approved`,name='Amount Approved')%>%
   layout(xaxis=list(title='USD Amount'), yaxis=list(title='Delivery Partner'))
 ```
+### Approval Timeline
+```{r}
+approvals$countryname <- factor(approvals$countryname, levels=approvals$countryname[order(approvals$`Time-to-approve (Months)`)] )
 
+fig <- plot_ly(approvals, color = I("gray60"))
+fig <- fig %>% add_segments(y = ~`Date of initial submission`, yend = ~Approval, x = ~countryname, xend = ~countryname, showlegend = FALSE)
+fig <- fig %>% add_segments(y = ~`Date of initial submission`, yend = ~`Last date of resubmission`, x = ~countryname, xend = ~countryname, showlegend = FALSE)
+fig <- fig %>% add_segments(y = ~`Last date of resubmission`, yend = ~Approval, x = ~countryname, xend = ~countryname, showlegend = FALSE)
+fig <- fig %>% add_markers(y = ~`Date of initial submission`, x = ~countryname, name = "Initial submission", color = I("red"))
+fig <- fig %>% add_markers(y = ~`Last date of resubmission`, x = ~countryname, name = "Resubmission", color = I("blue"))
+fig <- fig %>% add_markers(y = ~Approval, x = ~countryname, name = "Approval", color = I("green"))
+fig <- fig %>% layout(
+    title = "Time Taken To Approve GCF Readiness Funds",
+    xaxis = list(title = ""),
+    yaxis = list(title = "Date"),
+    margin = list(l = 10)
+  )
 
+fig
+```
 
 ##### Projects
 __To do:__ check if we have links to project websites or project files somewhere
