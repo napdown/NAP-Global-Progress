@@ -584,7 +584,7 @@ country_tot$countryname <- factor(country_tot$countryname, levels = unique(count
 p<-ggplot(country_tot)+
   geom_bar(stat='identity', aes(x=countryname,y=Total), colour='white',fill='blue')+
   labs(x='Country', y='Amount Accessed (Million USD)')+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 13), axis.text.y = element_text(size = 13), axis.title.y = element_text(size = 13), axis.title.x = element_blank())
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 11), axis.text.y = element_text(size = 11), axis.title.y = element_text(size = 11), axis.title.x = element_blank())
 ggplotly(p)
 
 ```
@@ -596,7 +596,7 @@ ldc<-GCF_merge%>%filter(Category2=='LDC')%>% filter(`Grand Total GCF`>0.0)%>% gr
 ldc$countryname <- factor(ldc$countryname, levels = unique(ldc$countryname)[order(ldc$Total, decreasing = TRUE)])
 
 plot_ly(ldc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=22)),yaxis=list(range=c(0,450), tickfont=list(size=20), title='Total Amount ((Million USD)', titlefont=list(size=20)))
+  plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=16)),yaxis=list(range=c(0,450), tickfont=list(size=16), title='Total Amount ((Million USD)', titlefont=list(size=20)))
 ```
 
 ### Total Funding - Other DC
@@ -605,7 +605,7 @@ otherdc<-GCF_merge%>%filter(Category2=='Other developing country')%>% filter(`Gr
 otherdc$countryname <- factor(otherdc$countryname, levels = unique(otherdc$countryname)[order(otherdc$Total, decreasing = TRUE)])
 
 plot_ly(otherdc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
- plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=15.85)),yaxis=list(range=c(0,450), tickfont=list(size=18), title='Total Amount ((Million USD)', titlefont=list(size=18)))
+ plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=15.85)),yaxis=list(range=c(0,450), tickfont=list(size=16), title='Total Amount ((Million USD)', titlefont=list(size=16)))
 ```
 
 ```{r}
