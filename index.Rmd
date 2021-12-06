@@ -8,26 +8,10 @@ output:
     vertical_layout: fill
     smooth_scroll: true
     source_code: https://github.com/napdown/NAP-Global-Progress
-    theme:
-      color-contrast-warnings: false
-      bg: "#202123"
-      fg: "#B8BCC2"
-      primary: "#EA80FC"
-      secondary: "#00DAC6"
-      base_font:
-        google: Prompt
-      heading_font:
-        google: Proza Libre
+    theme: paper
    
 ---
 
-
-```{r setup, include=FALSE}
-bslib::bs_themer()
-if (requireNamespace("thematic")) 
-  thematic::thematic_rmd(font = "auto")
-
-```
 
 ```{r libraries}
 library(flexdashboard)
@@ -563,7 +547,7 @@ plot_ly(mshort, type='bar', x=~Countries, y=paste(mshort$`Measure code`,':', sub
 Find full list of measures[here](do we have a sharable link for the measures?)
 
 
-Measures - Interactive
+Measures Gen - Interactive
 ============================================
 
 Filter {.sidebar}
@@ -575,7 +559,7 @@ measures$Measure1wrap<-factor(measures$Measure1wrap, levels = unique(measures$Me
 
 shared_measures<-SharedData$new(measures)
 
-filter_select("Element", "Select Measure", shared_measures, ~Element, multiple=TRUE, allLevels = TRUE)
+filter_select("Element", "Select Element", shared_measures, ~Element, multiple=TRUE, allLevels = TRUE)
 filter_select("Measure", "Select Measure", shared_measures, ~Measure, multiple=TRUE, allLevels = TRUE)
 
 
@@ -615,7 +599,7 @@ plot_ly(shared_measures, x = ~LDCs, y = ~Measure1wrap, type = 'bar', orientation
 
 ```
 
-Measures
+Measures Track - Interactive
 ============================================================
 
 column
@@ -664,7 +648,7 @@ Filters {.sidebar}
 ```{r}
 
 
-filter_select("Element", "Select Measure", shared_tracker, ~Element, multiple=TRUE, allLevels = TRUE)
+filter_select("Element", "Select Element", shared_tracker, ~Element, multiple=TRUE, allLevels = TRUE)
 filter_select("Measure", "Select Measure", shared_tracker, ~Measure, multiple=TRUE, allLevels = TRUE)
 
 #filter_select("Region", "Filter by Region", shared_tracker, ~Region, multiple=TRUE, allLevels = TRUE)
@@ -700,134 +684,7 @@ leaflet(NAP_Countries)%>%setView(lng= 35.79, lat= -9.71 , zoom = 2.5)%>%
  
 ```
 
-GCF Resources
-===============================================================
-{.tabset}
----------------------------------------------------------------
 
-### Total Funding - by Country
-
-```{r}
-country_tot<-GCF_merge%>%dplyr::filter(`Grand Total GCF`>0.0)%>%group_by(countryname)%>%summarise('Total'=sum(`Grand Total GCF`))
-
-country_tot$countryname <- factor(country_tot$countryname, levels = unique(country_tot$countryname)[order(country_tot$Total, decreasing =T)])
-
-p<-ggplot(country_tot)+
-  geom_bar(stat='identity', aes(y=countryname,x=Total), colour='white',fill='blue')+
-  labs(x='Amount Accessed (Million USD)', y='Country')+
-  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=0.5, size = 11), axis.text.y = element_text(size = 11), axis.title.x = element_text(size = 11), axis.title.y = element_blank())
-ggplotly(p)
-
-```
-
-### Total Funding - LDC
-```{r}
-ldc<-GCF_merge%>%filter(Category2=='LDC')%>% filter(`Grand Total GCF`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total GCF`))
-ldc$countryname <- factor(ldc$countryname, levels = unique(ldc$countryname)[order(ldc$Total, decreasing = TRUE)])
-
-plot_ly(ldc,type='bar',y=~countryname,x=~Total, colors = 'Blue', showlegend=F)%>%
-  plotly::layout(xaxis = list(title = "Total Amount ((Million USD)",range=c(0,450), tickangle=90, tickfont=list(size=14)),yaxis=list( tickfont=list(size=14), title='', titlefont=list(size=16)))
-```
-
-### Total Funding - Other DC
-```{r}
-otherdc<-GCF_merge%>%filter(Category2=='Other developing country')%>% filter(`Grand Total GCF`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total GCF`))
-otherdc$countryname <- factor(otherdc$countryname, levels = unique(otherdc$countryname)[order(otherdc$Total, decreasing = TRUE)])
-
-plot_ly(otherdc,type='bar',y=~countryname,x=~Total, colors = 'Blue', showlegend=F)%>%
- plotly::layout(xaxis = list(title = "Total Amount ((Million USD)", range=c(0,450),tickangle=90, tickfont=list(size=15.85)),yaxis=list( tickfont=list(size=12), title='', titlefont=list(size=12)))
-```
-
-
-##### Project Funding
-
-```{r}
-
-country_proj<-GCF_merge%>%dplyr::filter(`Total GCF financing (projects)`>0.0)%>%group_by(countryname)%>%summarise('Total'=sum(
-  `Total GCF financing (projects)`
-))
-
-country_proj$countryname <- factor(country_proj$countryname, levels = unique(country_proj$countryname)[order(country_proj$Total, decreasing = F)])
-
-  plot_ly(data=country_proj, type='bar', 
-          y=~countryname,
-          x=~Total)%>%
-    plotly::layout(title='Total Project Financing - by Country',yaxis=list(title=''), xaxis=list(title='Project Amount ((Million USD)'))
-```
-
-
-Readiness
-=======================================================
-{.tabset}
----------------------------------------------------------------
-
-### Total Readiness Accessed
-
-```{r}
-
-country_red<-GCF_merge%>%dplyr::filter(`Grand Total GCF`>0.0)%>%group_by(countryname)%>%summarise('Total'=sum(`Readiness support approved`))
-
-country_red$countryname <- factor(country_red$countryname, levels = unique(country_red$countryname)[order(country_red$Total, decreasing = F)])
-
-  plot_ly(data=country_red, type='bar', 
-          y=~countryname,
-          x=~Total)%>%
-    plotly::layout(title='Readiness Amount Approved - by Country',yaxis=list(title=''), xaxis=list(title='Readiness Amount Approved (Million USD)'))
-```
-
-
-### Readiness Amount by Delivery partner
-as at Nov 2020?
-
-```{r, fig.width=20}
-tot<-Readiness%>%
-  group_by(`Delivery Partner`,`Delivery Partner_long` )%>%
-  summarise("Total Approved"=sum(`Amount Approved`))
-
-mylabel <- paste(tot$`Delivery Partner`,paste('$',prettyNum(format(tot$`Total Approved`,big.mark = ","), "", sep = ",")),  sep = " \n")
-
-plot_ly(tot)%>%
-  add_pie(hole=0.4, labels = ~`Delivery Partner_long`, values = ~`Total Approved`, text=mylabel, textinfo='text',rotation=-270) %>%
-  layout(title="Readiness Amount Approved - by Delivery Partner",
-           legend=list(orientation='h', x=0, y=-0.9))
-```
-
-### Readiness Amount Approved/Disbursed - by delivery partner
-as at Nov 2020?
-```{r}
-del_p<-Readiness%>%
-  group_by(`Delivery Partner_long`)%>%
-  summarise("Total Approved"=sum(`Amount Approved`), "Total Disbursed"=sum(`Amount Disbursed`))
-
-del_p$`Delivery Partner_long` <- factor(del_p$`Delivery Partner_long`, levels = unique(del_p$`Delivery Partner_long`)[order(del_p$`Total Approved`, decreasing = F)])
-del_p$`Delivery Partner_long` <- factor(del_p$`Delivery Partner_long`, levels = unique(del_p$`Delivery Partner_long`)[order(del_p$`Total Disbursed`, decreasing = F)])
-
-plot_ly(del_p, type = 'bar', y=~`Delivery Partner_long`, x=~`Total Disbursed`, name='Amount Disbursed')%>%
-  add_trace( x=~`Total Approved`,name='Amount Approved')%>%
-  layout(xaxis=list(title='USD Amount'), yaxis=list(title='Delivery Partner'))
-```
-
-### Approval Timeline
-```{r}
-approvals$countryname <- factor(approvals$countryname, levels=approvals$countryname[order(approvals$`Time-to-approve (Months)`)] )
-
-fig <- plot_ly(approvals, color = I("gray60"))
-fig <- fig %>% add_segments(y = ~`Date of initial submission`, yend = ~Approval, x = ~countryname, xend = ~countryname, showlegend = FALSE)
-fig <- fig %>% add_segments(y = ~`Date of initial submission`, yend = ~`Last date of resubmission`, x = ~countryname, xend = ~countryname, showlegend = FALSE)
-fig <- fig %>% add_segments(y = ~`Last date of resubmission`, yend = ~Approval, x = ~countryname, xend = ~countryname, showlegend = FALSE)
-fig <- fig %>% add_markers(y = ~`Date of initial submission`, x = ~countryname, name = "Initial submission", color = I("red"))
-fig <- fig %>% add_markers(y = ~`Last date of resubmission`, x = ~countryname, name = "Resubmission", color = I("blue"))
-fig <- fig %>% add_markers(y = ~Approval, x = ~countryname, name = "Approval", color = I("green"))
-fig <- fig %>% layout(
-    title = "Time Taken To Approve GCF Readiness Funds",
-    xaxis = list(title = ""),
-    yaxis = list(title = "Date"),
-    margin = list(l = 10)
-  )
-
-fig
-
-```
 
 GCF Resources - Interactive {style="position:relative;"}
 ============================================================
