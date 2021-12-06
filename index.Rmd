@@ -3,14 +3,33 @@ title: "NAP Global Progress "
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
-    orientation: rows
+    storyboard: true
+    orientation: columns
     vertical_layout: fill
-    source_code: https://github.com/napdown/countryprofiles
-    theme: simplex
-  
+    smooth_scroll: true
+    source_code: https://github.com/napdown/NAP-Global-Progress
+    theme:
+      color-contrast-warnings: false
+      bg: "#202123"
+      fg: "#B8BCC2"
+      primary: "#EA80FC"
+      secondary: "#00DAC6"
+      base_font:
+        google: Prompt
+      heading_font:
+        google: Proza Libre
+   
 ---
 
+
 ```{r setup, include=FALSE}
+bslib::bs_themer()
+if (requireNamespace("thematic")) 
+  thematic::thematic_rmd(font = "auto")
+
+```
+
+```{r libraries}
 library(flexdashboard)
 library(shiny)
 library(readxl)
@@ -20,10 +39,11 @@ library(ggplot2)
 library(dplyr)
 library(reshape)
 library(rpivotTable)
+library(htmlwidgets)
 library(DT)
 library(leaflet)
+library(leaflet.extras)
 library(crosstalk)
-
 ```
 
 
@@ -43,6 +63,7 @@ iso_cat<- as.data.frame(read_excel("Open_NAPs_Database.xlsm",sheet = "country_ca
 latlong <-as.data.frame(read_excel("Open_NAPs_Database.xlsm",sheet = "countrylatlong"))
 Readiness<- as.data.frame(read_excel("Open_NAPs_Database.xlsm",sheet = "Readiness"))%>%dplyr::filter(Activity=='Adaptation Planning (AP)')
 approvals<-as.data.frame(read_excel("Open_NAPs_Database.xlsm", sheet = "Readiness_Approval"))%>%na.omit()
+gef<-read_excel("Open_NAPs_Database.xlsm", sheet = "GEF")
 
 
 #merge
@@ -57,21 +78,36 @@ NAPCountries<-merge(unregions,NAPS, by="countryname", all.y = TRUE)
 xycountrycode<-merge(unregions,latlong, by='countryname', all.x = TRUE)
 NAP_Countries<-merge(NAPS,xycountrycode, by="countryname", all.x = TRUE)
 
+gef_merge<-merge(gef, categories, by='countryname', all.x = T)
+gef_regions<-merge(gef_merge,regions, by='countryname', all = T)
+
+#gef
+ldcf<-gef_regions%>%filter(`Fund Source`=='Least Developed Countries Fund')%>%dplyr::group_by(countryname, Region, Category, Category2, Status)%>%summarise('Grant'=sum(Grant), 'Co-Finance'=sum(`Co-Financing`))
+
+sccf<-gef_regions%>%filter(`Fund Source`=='Special Climate Change Fund')%>%dplyr::group_by(countryname, Region, Category, Category2, Status)%>%summarise('Grant'=sum(Grant), 'Co-Finance'=sum(`Co-Financing`))
+
+sc_ldcf<-merge(ldcf,sccf, all.x =  T)
+
 # data for crosstalk
 df<-merge(GCF_accessed,regions, by="countryname")
 df<-merge(df, Readiness, by="countryname", all.x=T)
 df<-merge(df, approvals, by="countryname", all.x=T)
 df<-merge(df, categories, by="countryname", all.x=T)
 df<-df[,c(1,10,7,8,9,17,18,19,21,22,23,26,27,28,29,31,32)]
+df<-merge(df, latlong, by='countryname', all.y = T)
+df$countryname<-factor(df$countryname, levels = unique(df$countryname)[order(df$`Grand Total GCF`, decreasing = T)])
 
 shared_df <- SharedData$new(df)
+ldcf_shared<-SharedData$new(ldcf)
+sccf_shared<-SharedData$new(sccf)
+
 
 ```
 
 
 Progress to Formulate & Implement NAPS
 ==================================================================================
-{.tabset}
+column {.tabset}
 -------------------------------------------------------------
 
 ### Measures General Outlook
@@ -194,6 +230,7 @@ subplot(plotA, plotB,plotC, plotD, shareY = T, shareX = T, titleY = T, margin = 
 
 ```
 
+
 ###### ggplot - delete
 
 ```{r}
@@ -247,8 +284,8 @@ ggplot(mdf)+
 
 
 Select Measures
-=========================================================================================
-{.tabset }
+=========================================================== 
+column {.tabset }
 ---------------------------------------------
 ### General Outlook
 ```{r}
@@ -258,13 +295,11 @@ mselect$Measure1<-factor(mselect$Measure1, levels = unique(mselect$Measure1)[ord
 
 mselect$Measure1wrap<-sapply(mselect$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 60), collapse = "<br>")})
 
-fig <- plot_ly(mselect, x = ~LDCs, y = ~Measure1, type = 'bar', orientation = 'h', text=~LDCs, textposition= 'left',textfont=list(size=12, color='white'), name = 'LDCs',
-        marker = list(color = 'rgba(38, 24, 74, 0.8)')) 
-
-fig <- fig %>% add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries (non-LDC)', marker = list(color = 'rgba(71, 68, 131, 0.85)'),text=~`Developing Countries  (non-LDC)`, textposition= 'right',textfont=list(size=12, color='white')) 
-
-fig <- fig %>% add_trace(x = ~`Without Measure`,name='Without Measure', marker = list(color = 'rgba(164, 163, 204, 0.95)'),text=~`Without Measure`, textposition= 'middle',textfont=list(size=12, color='white')) 
-fig <- fig %>% layout(xaxis = list(title = "No. of Countries",
+plot_ly(mselect, x = ~LDCs, y = ~Measure1, type = 'bar', orientation = 'h', text=~LDCs, textposition= 'left',textfont=list(size=12, color='white'), name = 'LDCs',
+        marker = list(color = 'rgba(38, 24, 74, 0.8)'))%>%
+ add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries (non-LDC)', marker = list(color = 'rgba(71, 68, 131, 0.85)'),text=~`Developing Countries  (non-LDC)`, textposition= 'right',textfont=list(size=12, color='white'))%>%
+  add_trace(x = ~`Without Measure`,name='Without Measure', marker = list(color = 'rgba(164, 163, 204, 0.95)'),text=~`Without Measure`, textposition= 'middle',textfont=list(size=12, color='white'))%>% 
+  layout(xaxis = list(title = "No. of Countries",
                       showgrid = TRUE,
                       showline = FALSE,
                       showtext=T,
@@ -279,22 +314,16 @@ fig <- fig %>% layout(xaxis = list(title = "No. of Countries",
          barmode = 'stack',
          paper_bgcolor = 'rgb(248, 248, 255)', plot_bgcolor = 'rgb(248, 248, 255)',
          margin = list(l = 200, r = 0, t = 10, b = 50),
-         showlegend = TRUE, legend=list(orientation='h', x=0.2,y=-0.15))
-
-# label yaxis
-fig <- fig %>% add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure1,
+         showlegend = TRUE, legend=list(orientation='h', x=0.2,y=-0.15))%>%
+  add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure1,
                   xanchor = 'right',
                   text = mselect$Measure1wrap,
                   font = list(family = 'Arial', size = 12,
                             color = 'rgb(67, 67, 67)'),
                   showarrow = FALSE, align = 'center') 
 
-
-
- 
-fig
-
 ```
+
 
 #### Important Measures -  general
 
@@ -524,14 +553,130 @@ plotly::subplot(ldc_plot,otherdc_plot, titleX = T,shareY = T, margin = 0.01)%>% 
 mshort<-selected_measures[,c(3,5,6,7,8,19)]%>%group_by(Measure, Category2, `Measure code`)%>%count(Country)%>%summarise("Countries"=sum(n))
 mshort$`Measure code`<-factor(mshort$`Measure code`, levels = unique(mshort$`Measure code`)[order(mshort$`Measure code`, decreasing = TRUE)])
 #mshort%>%group_by(Measure)%>%count(Country)%>%summarise("Countries"=sum(n))
-plot_ly(mshort, type='bar', x=~Countries, y=paste(mshort$`Measure code`,':', substr(mshort$Measure, 1, 40), '...'), fill=~Category2, color = ~Category2)%>%plotly::layout(barmode='stack')
+plot_ly(mshort, type='bar', x=~Countries, y=paste(mshort$`Measure code`,':', substr(mshort$Measure, 1, 40), '...'), color = ~Category2)%>%plotly::layout(barmode='stack')
 
 #ggplot(mshort)+
  # geom_bar(stat = 'identity', aes(x=Countries, y=paste(mshort$`Measure code`, ':', substr(mshort$Measure, 1, 40), '...'), fill=Category2, #colour=Category2))
 ```
 
 
-Find full of measures[here](do we have a sharable link for the measures?)
+Find full list of measures[here](do we have a sharable link for the measures?)
+
+
+Measures - Interactive
+============================================
+
+Filter {.sidebar}
+---------------------------------
+```{r}
+measures$Measure1wrap<-sapply(measures$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 79), collapse = "<br>")})
+
+measures$Measure1wrap<-factor(measures$Measure1wrap, levels = unique(measures$Measure1wrap)[order(measures$Code, decreasing = TRUE)])
+
+shared_measures<-SharedData$new(measures)
+
+filter_select("Element", "Select Measure", shared_measures, ~Element, multiple=TRUE, allLevels = TRUE)
+filter_select("Measure", "Select Measure", shared_measures, ~Measure, multiple=TRUE, allLevels = TRUE)
+
+
+```
+
+column
+------------------------------------------
+### Measures Outlook
+```{r}
+plot_ly(shared_measures, x = ~LDCs, y = ~Measure1wrap, type = 'bar', orientation = 'h',  name = 'LDCs',
+        marker = list(color = 'rgba(38, 24, 74, 0.8)'),text=~LDCs, textposition= 'top  right',textfont=list(size=12, color='white')) %>%
+  add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries  (non-LDC)',  marker = list(color = 'rgba(71, 68, 131, 0.85)'),text=~`Developing Countries  (non-LDC)`, textposition= 'right',textfont=list(size=12, color='white'))%>%
+  add_trace(x = ~`Without Measure`,name='Without Measure', marker = list(color = 'rgba(164, 163, 204, 0.95)'),text=~`Without Measure`, textposition= 'middle left',textfont=list(size=12, color='white')) %>% 
+  layout(xaxis = list(title = "No. of Countries",
+                      showgrid = TRUE,
+                      showline = FALSE,
+                      showtext=T,
+                      showticklabels = TRUE,
+                      zeroline = FALSE,
+                      domain = c(0.15, 1)),
+         yaxis = list(title = "",
+                      showgrid = FALSE,
+                      showline = FALSE,
+                      showticklabels = FALSE,
+                      zeroline = FALSE),
+         barmode = 'stack',
+         paper_bgcolor = 'rgb(248, 248, 255)', plot_bgcolor = 'rgb(248, 248, 255)',
+         margin = list(l = 200, r = 0, t = 10, b = 50),
+         showlegend = TRUE, legend=list(orientation='h', x=0.2,y=-0.15))%>%
+  add_annotations(xref = 'paper', yref = 'y', x = 0.14, y = ~Measure1wrap,
+                  xanchor = 'right',
+                  text = measures$Measure1wrap,
+                  font = list(family = 'Arial', size = 12,
+                            color = 'rgb(67, 67, 67)'),
+                  showarrow = FALSE, align = 'center') 
+
+
+```
+
+Measures
+============================================================
+
+column
+------------------------------------------
+### Measures -Progress
+
+```{r}
+m<-tracker_merge%>%group_by(Measure,`Measure code`,Region, Category, Category2, Element)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+
+m$Measurewrap<-sapply(m$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 50), collapse = "<br>")})
+
+m$Measurewrap<-factor(m$Measurewrap, levels = unique(m$Measurewrap)[order(m$`Measure code`,decreasing = F)])
+
+shared_tracker<-SharedData$new(m)
+
+shared_tracker%>%
+  plot_ly(type = 'bar',
+    x=~Countries,
+    y=~Category,
+   group = ~Element, color = ~Measure
+  )%>%layout(barmode='stack')
+```
+### By Region
+```{r}
+shared_tracker%>%
+  plot_ly(type = 'bar',
+    x=~Countries,
+    y=~Region,
+   group = ~Element, color = ~Measure
+  )%>%layout(barmode='stack')
+```
+
+
+
+##### gg
+```{r}
+x<-ggplot(shared_tracker, aes(Countries, `Measure code`))+
+   geom_bar(aes(fill = Element, color = Region), position = "stack", stat = "identity")+scale_color_manual(values = c(rep("grey", 17)))+theme(legend.position = "none")
+ggplotly(x)
+```
+
+Filters {.sidebar}
+--------------------------------------------
+
+```{r}
+
+
+filter_select("Element", "Select Measure", shared_tracker, ~Element, multiple=TRUE, allLevels = TRUE)
+filter_select("Measure", "Select Measure", shared_tracker, ~Measure, multiple=TRUE, allLevels = TRUE)
+
+#filter_select("Region", "Filter by Region", shared_tracker, ~Region, multiple=TRUE, allLevels = TRUE)
+
+#filter_checkbox("Country Category", "Filter by Category", shared_tracker, ~Category2,columns = 2, inline=T, allLevels = FALSE)
+
+#filter_select("Cat2", "More Categories", shared_tracker, ~Category, multiple=TRUE)
+ 
+#filter_slider("Time in Months","Time (months) taken to approve GCF",shared_tracker,~`Time-to-approve (Months)`, min = 0, max = 40, width = 200)
+
+
+``` 
 
 NAP Submissions
 ========================================================
@@ -555,20 +700,6 @@ leaflet(NAP_Countries)%>%setView(lng= 35.79, lat= -9.71 , zoom = 2.5)%>%
  
 ```
 
-##### List
-```{r}
-NAPS$`Document title`<-paste('<a href=',NAPS$Link, '>',NAPS$`Document title`,'</a>', sep = "")
-
-colnames(NAPS)[colnames(NAPS)=='countryname']<-'Country'
-#colnames(GCF_projects)[colnames(GCF_projects)=='Region_init']<-'Region'
-naps<-NAPS[,-4]
-datatable(naps,filter = 'top',selection = 'multiple',callback = JS("return table;"), fillContainer = T,rownames = F, editable = F, style = 'jqueryui', class = 'display responsive', width = '100%', caption = "GCF Projects", extensions = 'Buttons', options=list(initComplete = JS("function(settings, json) {$(this.api().table().header()).css({'font-size' : '70%'});}"),pageLength= 10, dom='lfrtipB', buttons = c('copy', 'csv', 'excel', 'pdf')), escape = F)%>%
-  DT::formatStyle(columns = colnames(naps),fontSize= '12px')
- 
-```
-
-
-
 GCF Resources
 ===============================================================
 {.tabset}
@@ -582,21 +713,20 @@ country_tot<-GCF_merge%>%dplyr::filter(`Grand Total GCF`>0.0)%>%group_by(country
 country_tot$countryname <- factor(country_tot$countryname, levels = unique(country_tot$countryname)[order(country_tot$Total, decreasing =T)])
 
 p<-ggplot(country_tot)+
-  geom_bar(stat='identity', aes(x=countryname,y=Total), colour='white',fill='blue')+
-  labs(x='Country', y='Amount Accessed (Million USD)')+
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 11), axis.text.y = element_text(size = 11), axis.title.y = element_text(size = 11), axis.title.x = element_blank())
+  geom_bar(stat='identity', aes(y=countryname,x=Total), colour='white',fill='blue')+
+  labs(x='Amount Accessed (Million USD)', y='Country')+
+  theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=0.5, size = 11), axis.text.y = element_text(size = 11), axis.title.x = element_text(size = 11), axis.title.y = element_blank())
 ggplotly(p)
 
 ```
-
 
 ### Total Funding - LDC
 ```{r}
 ldc<-GCF_merge%>%filter(Category2=='LDC')%>% filter(`Grand Total GCF`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total GCF`))
 ldc$countryname <- factor(ldc$countryname, levels = unique(ldc$countryname)[order(ldc$Total, decreasing = TRUE)])
 
-plot_ly(ldc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
-  plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=16)),yaxis=list(range=c(0,450), tickfont=list(size=16), title='Total Amount ((Million USD)', titlefont=list(size=20)))
+plot_ly(ldc,type='bar',y=~countryname,x=~Total, colors = 'Blue', showlegend=F)%>%
+  plotly::layout(xaxis = list(title = "Total Amount ((Million USD)",range=c(0,450), tickangle=90, tickfont=list(size=14)),yaxis=list( tickfont=list(size=14), title='', titlefont=list(size=16)))
 ```
 
 ### Total Funding - Other DC
@@ -604,21 +734,10 @@ plot_ly(ldc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Bl
 otherdc<-GCF_merge%>%filter(Category2=='Other developing country')%>% filter(`Grand Total GCF`>0.0)%>% group_by(countryname, Category2)%>%summarise('Total'=sum(`Grand Total GCF`))
 otherdc$countryname <- factor(otherdc$countryname, levels = unique(otherdc$countryname)[order(otherdc$Total, decreasing = TRUE)])
 
-plot_ly(otherdc,type='bar',x=~countryname,y=~Total, color = ~Category2, colors = 'Blue', showlegend=F)%>%
- plotly::layout(barmode='stack', xaxis = list(title = "", tickangle=90, tickfont=list(size=15.85)),yaxis=list(range=c(0,450), tickfont=list(size=16), title='Total Amount ((Million USD)', titlefont=list(size=16)))
+plot_ly(otherdc,type='bar',y=~countryname,x=~Total, colors = 'Blue', showlegend=F)%>%
+ plotly::layout(xaxis = list(title = "Total Amount ((Million USD)", range=c(0,450),tickangle=90, tickfont=list(size=15.85)),yaxis=list( tickfont=list(size=12), title='', titlefont=list(size=12)))
 ```
 
-```{r}
-
-ldc1<-ldc
-ldc1$Total<-as.integer(ldc1$Total)
-write.table(ldc1, file = 'ldc1.txt', sep = "", row.names = F)
-
-otherdc1<-otherdc
-otherdc1$Total<-as.character(otherdc1$Total)
-write.table(otherdc1, file = 'otherdc1.csv', sep = "", row.names = F)
-
-```
 
 ##### Project Funding
 
@@ -638,7 +757,7 @@ country_proj$countryname <- factor(country_proj$countryname, levels = unique(cou
 
 
 Readiness
-=====================================================
+=======================================================
 {.tabset}
 ---------------------------------------------------------------
 
@@ -710,52 +829,60 @@ fig
 
 ```
 
-GCF Resources - Interactive
-=============================================
-column
-----------------------------------------
+GCF Resources - Interactive {style="position:relative;"}
+============================================================
 
-### Total GCF by Country
+Filters {.sidebar}
+--------------------------------------------
+
 ```{r}
-shared_df <- SharedData$new(df)
+filter_select("Region", "Filter by Region", shared_df, ~Region, multiple=TRUE, allLevels = TRUE)
 
-bscols(widths = c(2,2),
-  list(filter_select("Region", "Filter by Region", shared_df, ~Region, multiple=TRUE),filter_checkbox("Country Category", "Filter by Category", shared_df, ~Category2,columns = 1),filter_select("Cat2", "More Categories", shared_df, ~Category, multiple=TRUE)),
-  plot_ly(shared_df, x=~countryname,y=~`Grand Total GCF`, showlegend=F, width = "100%")%>%
+filter_checkbox("Country Category", "Filter by Category", shared_df, ~Category2,columns = 2, inline=T, allLevels = FALSE)
+
+filter_select("Cat2", "More Categories", shared_df, ~Category, multiple=TRUE)
+ 
+filter_slider("Time in Months","Time (months) taken to approve GCF",shared_df,~`Time-to-approve (Months)`, min = 0, max = 40, width = 200)
+
+
+
+``` 
+
+
+
+
+To deselect, delete the item from filter box
+
+
+Row {style="height:100pc;"}
+------------------------------
+### Total GCF by Country {data-commentary-width=400}
+```{r}
+
+shared_df%>%
+  plot_ly(type='bar', x=~countryname,y=~`Grand Total GCF`, showlegend=F)%>%
           plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
   
-)
+
 ```
 
-### Readiness by Delivery Partner
-```{r}
-mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readiness support approved`),big.mark = ","), "", sep = ",")),  sep = " \n")
 
-bscols(
-  shared_df%>% 
-  plot_ly()%>%
-  add_pie(hole=0.4, labels = ~`Delivery Partner_long`, values = ~`Readiness support approved`, text=~`Delivery Partner` , textinfo='text',rotation=140, showlegend=F) %>%
-  layout(title="",
-           legend=list(orientation='h', x=0, y=-0.9))
-)
-```
+Some commentary about Frame 1.
 
-row
------------------------------------------------
 ### Readiness Support
 ```{r}
 
-  bscols(
-      plot_ly(shared_df, x=~countryname,y=~`Readiness support approved`, showlegend=F)%>%
+shared_df%>%
+      plot_ly(x=~countryname,y=~`Readiness support approved`, showlegend=F)%>%
           plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
-  )
+  
 ```
+
 
 ### Readiness Approval Timeline
 ```{r}
 
-  bscols(widths = c(3,10),
-    list(filter_slider("Time in Months","Time to approve (Months)",shared_df,~`Time-to-approve (Months)`, min = 0, max = 40)),
+  bscols(
     plot_ly(shared_df, color = I("grey60"))%>%
   add_segments(y = ~`Date of initial submission`, yend = ~Approval, x = ~countryname, xend = ~countryname, showlegend = FALSE) %>%
   add_segments(y = ~`Date of initial submission`, yend = ~`Last date of resubmission`, x = ~countryname, xend = ~countryname, showlegend = FALSE) %>% 
@@ -768,6 +895,88 @@ row
   )
 ```
 
+
+Column {data-height=100}
+---------------------------------------
+
+### Readiness by Delivery Partner
+```{r}
+mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readiness support approved`),big.mark = ","), "", sep = ",")),  sep = " \n")
+
+bscols(
+  plot_ly(shared_df)%>%
+  add_pie(hole=0.6, labels = ~`Delivery Partner_long`, values = ~`Readiness support approved`, text=~`Delivery Partner` , textinfo='labels',rotation=140, showlegend=F) %>%
+  layout(title="",
+           legend=list(orientation='h', x=0, y=-0.9))
+)
+```
+
+### GCF Resources by Country
+```{r}
+popup<-paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`)
+
+shared_df%>%
+  leaflet()%>%
+  setView(lng = 35.79,lat = -9.71, zoom = 1.49)%>%
+  addProviderTiles(providers$OpenStreetMap)%>%
+  #setMaxBounds(-90,-60,90,60)%>%
+  addCircleMarkers(fill = T, radius = ~`Grand Total GCF`*0.1,weight =~`Readiness support approved`, color = '#fc7204',
+    label = lapply(as.list(paste('<strong><strong>',df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`)), HTML),popup=paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`)
+)%>%addMeasure()%>%addResetMapButton()
+#%>%
+ # addCircles(fill = T, fillColor = 'red',fillOpacity = 0.5, weight = ~`Readiness support approved`*2,popup = paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`))
+#%>%addLegend('bottomleft', values = ~`Grand Total GCF`, title = 'GCF Total', labFormat = labelFormat(prefix = '$'), colors = 'browns')
+```
+
+LDCF
+===============================================================
+
+Filters {.sidebar}
+------------------------------
+
+```{r}
+filter_select("Region", "Filter by Region", ldcf_shared, ~Region, multiple=TRUE, allLevels = TRUE)
+
+filter_checkbox("Country Category", "Filter by Category", ldcf_shared, ~Category2,columns = 2, inline=T, allLevels = FALSE)
+
+filter_select("Cat2", "More Categories", ldcf_shared, ~Category, multiple=TRUE)
+ 
+filter_checkbox("Status","Filter by Status",ldcf_shared,~Status)
+```
+
+Column
+----------------------------------------------------------
+### LDCF {data-commentary-width=400}
+```{r}
+ldcf_shared%>%
+  plot_ly(type='bar', x=~countryname,y=~Grant, showlegend=F)%>%
+          plotly::layout(barmode='stack', title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
+  
+
+```
+
+
+### SCCF
+```{r}
+sccf_shared%>%
+  plot_ly(type='bar', x=~countryname,y=~Grant, showlegend=F)%>%
+          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
+
+```
+
+
+row
+----------------------------------------------------
+### GEF Project Status
+```{r}
+stat<-ldcf%>%group_by(Status, countryname)%>%summarise('value'=unique(Status))%>%count(countryname)%>%summarise('count'= sum(n))
+
+plot_ly(stat)%>%
+  add_pie(hole=0.4, labels = ~Status, values = ~count, text=~Status , textinfo='labels',rotation=140, showlegend=F) %>%
+  layout(title="",
+           legend=list(orientation='h', x=0, y=-0.9))
+
+```
 
 ##### Projects
 __To do:__ check if we have links to project websites or project files somewhere
@@ -787,16 +996,21 @@ datatable(proj,filter = 'top',selection = 'multiple',callback = JS("return table
 ```
 
 
-Explore with pivot table
+Explore NAP Measures with pivot table 
 =================================================
+
+{style="height:100pc;"}
+---------------------------
 __Hint__
-Select desired graphic to draw from the drop-down menu on the first column   
-Drag-&-Drop the variable(s) of interest from the first column into the second column,    
-Then from the drop down menu on the second column select how you want to represent your values e.g as a Count, Sum, List, etc   
+1. Select desired graphic to draw from the drop-down menu on the first column    
+2. Drag-&-Drop the variable(s) of interest from the first column into the second column. To remove variables from the active (second column) drag-&-drop them back to the first column      
+3. Then from the drop down menu on the second column select how you want to represent your values e.g as a Count, Sum, List, etc    
+See screenshot.    
+![how to work the pivot table](pivottable_how_to.png){width=5in}
+
 
 ```{r}
-rpivotTable(data=tracker, cols =~Country,   rendererName ='Horizontal Stacked Bar Chart' )
-#rows = ~Measure,vals = 'Measure', aggregatorName = 'Count Unique Values',
+rpivotTable(data=tracker, cols =c('Measure code', 'Measure', 'Region'), rows = c('Measure code', 'Measure', 'Region'),  rendererName ='Row Heatmap', vals = 'Measure', aggregatorName = 'Count')
 ```
 
 
