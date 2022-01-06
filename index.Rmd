@@ -7,7 +7,7 @@ output:
     orientation: columns
     vertical_layout: fill
     smooth_scroll: true
-    source_code: https://github.com/napdown/NAP-Global-Progress
+    source_code: https://github.com/napdown/NAP-Global-Progre/index.Rmd
     theme: paper
    
 ---
@@ -72,6 +72,7 @@ sccf<-gef_regions%>%filter(`Fund Source`=='Special Climate Change Fund')%>%dplyr
 
 sc_ldcf<-merge(ldcf,sccf, all.x =  T)
 
+
 # data for crosstalk
 df<-merge(GCF_accessed,regions, by="countryname")
 df<-merge(df, Readiness, by="countryname", all.x=T)
@@ -79,6 +80,8 @@ df<-merge(df, approvals, by="countryname", all.x=T)
 df<-merge(df, categories, by="countryname", all.x=T)
 df<-df[,c(1,10,7,8,9,17,18,19,21,22,23,26,27,28,29,31,32)]
 df<-merge(df, latlong, by='countryname', all.y = T)
+df<-subset(df, `Grand Total GCF`!='NA')
+df<-subset(df,`Grand Total GCF`!='0' )
 df$countryname<-factor(df$countryname, levels = unique(df$countryname)[order(df$`Grand Total GCF`, decreasing = T)])
 
 shared_df <- SharedData$new(df)
@@ -604,7 +607,7 @@ Measures Track - Interactive
 
 column
 ------------------------------------------
-### Measures -Progress
+### By Country Category
 
 ```{r}
 m<-tracker_merge%>%group_by(Measure,`Measure code`,Region, Category, Category2, Element)%>%count(Country)%>%
@@ -622,7 +625,9 @@ shared_tracker%>%
     y=~Category,
    group = ~Element, color = ~Measure
   )%>%layout(barmode='stack')
+
 ```
+
 ### By Region
 ```{r}
 shared_tracker%>%
@@ -708,7 +713,7 @@ filter_slider("Time in Months","Time (months) taken to approve GCF",shared_df,~`
 
 
 
-To deselect, delete the item from filter box
+_To Deselect, delete the item from filter box_
 
 
 Row {style="height:100pc;"}
@@ -723,8 +728,6 @@ shared_df%>%
 
 ```
 
-
-Some commentary about Frame 1.
 
 ### Readiness Support
 ```{r}
@@ -858,11 +861,10 @@ Explore NAP Measures with pivot table
 
 {style="height:100pc;"}
 ---------------------------
-__Hint__
+__Hint__  
 1. Select desired graphic to draw from the drop-down menu on the first column    
 2. Drag-&-Drop the variable(s) of interest from the first column into the second column. To remove variables from the active (second column) drag-&-drop them back to the first column      
-3. Then from the drop down menu on the second column select how you want to represent your values e.g as a Count, Sum, List, etc    
-See screenshot.    
+3. Then from the drop down menu on the second column select how you want to represent your values e.g as a Count, Sum, List, etc. See screenshot.    
 ![how to work the pivot table](pivottable_how_to.png){width=5in}
 
 
