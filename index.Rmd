@@ -610,12 +610,14 @@ column
 ### By Country Category
 
 ```{r}
-m<-tracker_merge%>%group_by(Measure,`Measure code`,Region, Category, Category2, Element)%>%count(Country)%>%
+m<-tracker_merge%>%group_by(Measure,`Measure code`,Country, Category, Element)%>%count(Country)%>%
   summarise('Countries'=sum(n))
 
 m$Measurewrap<-sapply(m$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 50), collapse = "<br>")})
 
 m$Measurewrap<-factor(m$Measurewrap, levels = unique(m$Measurewrap)[order(m$`Measure code`,decreasing = F)])
+
+#m$mytext<-sapply(m$Country, FUN = function(Country){paste(strwrap(Country, width = 20), collapse="<br>")})
 
 shared_tracker<-SharedData$new(m)
 
@@ -623,26 +625,42 @@ shared_tracker%>%
   plot_ly(type = 'bar',
     x=~Countries,
     y=~Category,
-   group = ~Element, color = ~Measure
+   color = ~`Measure code`,
+   name = ~paste(`Measure code`, Measure,sep=':'),
+   text= ~paste(Measure, Country, sep ="\n"),
+   textposition= 'none',
+   hoverinfo='text'
   )%>%layout(barmode='stack')
 
 ```
 
 ### By Region
 ```{r}
-shared_tracker%>%
+reg<-tracker_merge%>%group_by(Measure,`Measure code`,Region, Country, Element)%>%count(Country)%>%
+  summarise('Countries'=sum(n))
+
+reg$Measurewrap<-sapply(reg$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 50), collapse = "<br>")})
+
+reg$Measurewrap<-factor(reg$Measurewrap, levels = unique(reg$Measurewrap)[order(reg$`Measure code`,decreasing = F)])
+
+shared_reg<-SharedData$new(reg)
+shared_reg%>%
   plot_ly(type = 'bar',
     x=~Countries,
     y=~Region,
-   group = ~Element, color = ~Measure
-  )%>%layout(barmode='stack')
+    color = ~`Measure code`,
+     name = ~paste(`Measure code`, Measure,sep=':'),
+    text= ~paste(Measure, Country, sep ="\n"),
+   textposition= 'none',
+   hoverinfo='text'
+  )%>%layout(barmode='stack', showlegend=FALSE)
 ```
 
 
 
 ##### gg
 ```{r}
-x<-ggplot(shared_tracker, aes(Countries, `Measure code`))+
+x<-ggplot(shared_reg, aes(Countries, `Measure code`))+
    geom_bar(aes(fill = Element, color = Region), position = "stack", stat = "identity")+scale_color_manual(values = c(rep("grey", 17)))+theme(legend.position = "none")
 ggplotly(x)
 ```
