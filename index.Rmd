@@ -7,7 +7,7 @@ output:
     orientation: columns
     vertical_layout: fill
     smooth_scroll: true
-    source_code: https://github.com/napdown/NAP-Global-Progre/index.Rmd
+    source_code: https://github.com/napdown/NAP-Global-Progress/index.Rmd
     theme: paper
    
 ---
@@ -271,10 +271,8 @@ ggplot(mdf)+
 
 
 Select Measures
-=========================================================== 
-column {.tabset }
----------------------------------------------
-### General Outlook
+
+### Select Measures- General Outlook
 ```{r}
 mselect<-measures%>%dplyr::filter(Code=='A1'|Code=='A2'|Code=='A3'|Code=='A8'|Code=='A9'|Code=='B3'|Code=='B7'|Code=='C3'|Code=='D4')
 
@@ -330,7 +328,7 @@ plot_ly(df1,type='bar',x=~Measurewrap, y=~Countries, text=~Countries, textpositi
 ```
 
 
-### By Region
+### Select Measures - By Region
 
 ```{r}
 
@@ -476,7 +474,7 @@ plotly::subplot(ldc_plot,sids_plot,ldc_sids_plot,lldc_plot,ldc_lldc_plot,otherdc
 
 ```
 
-### By Country Category
+### Select Measures - By Country Category
 
 ```{r}
 ldctitle <- list(
@@ -549,13 +547,47 @@ plot_ly(mshort, type='bar', x=~Countries, y=paste(mshort$`Measure code`,':', sub
 
 Find full list of measures[here](do we have a sharable link for the measures?)
 
-
 Measures Gen - Interactive
 ============================================
 
-Filter {.sidebar}
----------------------------------
+  column
+-------------------------------
+
+###  __*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
+
 ```{r}
+mdf<-as.data.frame(measures[,-c(2,3,4,9)])%>%reshape::melt(id.vars=c('Element', 'Measure1'))
+
+mdf$Measure1wrap<-sapply(mdf$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 79), collapse = "<br>")})
+
+mdf$Measure1wrap<-factor(mdf$Measure1wrap, levels = unique(measures$Measure1wrap)[order(measures$Code, decreasing = TRUE)])
+
+mykey <- highlight_key(mdf)
+
+p<-mykey%>%
+  plot_ly(type = 'bar',  x=~value, y=~Measure1wrap, color =~variable, colors = c("#50456e","#615f95","#a9a8cf"), text=~value, textposition= 'top  right',textfont=list(size=12, color='white'), height = 800)%>%
+  layout(barmode='stack', legend=list(orientation='h', x=0, y=-0.18), xaxis=list(title='No. of Countries'), yaxis=list(title='', standoff=45))
+
+filter <- bscols(
+    filter_select('id', '- Select an Element', mykey, ~Element),
+  filter_select("id", "     Select a measure", mykey, ~Measure1wrap),
+  ggplotly(p, dynamicTicks = TRUE),
+  widths = c(3,3, 10))
+
+filter
+
+```
+
+
+
+
+
+```{r, eval=FALSE}
+
+########Filter {.sidebar}
+ ---------------------------------
+  
+  
 measures$Measure1wrap<-sapply(measures$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 79), collapse = "<br>")})
 
 measures$Measure1wrap<-factor(measures$Measure1wrap, levels = unique(measures$Measure1wrap)[order(measures$Code, decreasing = TRUE)])
@@ -565,13 +597,23 @@ shared_measures<-SharedData$new(measures)
 filter_select("Element", "Select Element", shared_measures, ~Element, multiple=TRUE, allLevels = TRUE)
 filter_select("Measure", "Select Measure", shared_measures, ~Measure, multiple=TRUE, allLevels = TRUE)
 
+#__*** To un-filter, delete item from filter box__
+
+#__*** To reset all filters, refresh your browser__
 
 ```
 
+
+
+
+
+```{r, eval=FALSE}
+
+
 column
-------------------------------------------
-### Measures Outlook
-```{r}
+ ------------------------------------------
+ ### Measures Outlook
+  
 plot_ly(shared_measures, x = ~LDCs, y = ~Measure1wrap, type = 'bar', orientation = 'h',  name = 'LDCs',
         marker = list(color = 'rgba(38, 24, 74, 0.8)'),text=~LDCs, textposition= 'top  right',textfont=list(size=12, color='white')) %>%
   add_trace(x = ~`Developing Countries  (non-LDC)`,name='Developing Countries  (non-LDC)',  marker = list(color = 'rgba(71, 68, 131, 0.85)'),text=~`Developing Countries  (non-LDC)`, textposition= 'right',textfont=list(size=12, color='white'))%>%
@@ -607,21 +649,20 @@ Measures Track - Interactive
 
 column
 ------------------------------------------
-### By Country Category
+
+__*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
+
+###  
+
 
 ```{r}
-m<-tracker_merge%>%group_by(Measure,`Measure code`,Country, Category, Element)%>%count(Country)%>%
+
+xx<-tracker_merge%>%group_by(Measure,`Measure code`,Country, Region, Category, Element)%>%count(Country)%>%
   summarise('Countries'=sum(n))
 
-m$Measurewrap<-sapply(m$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 50), collapse = "<br>")})
+shared_xx<-SharedData$new(xx)
 
-m$Measurewrap<-factor(m$Measurewrap, levels = unique(m$Measurewrap)[order(m$`Measure code`,decreasing = F)])
-
-#m$mytext<-sapply(m$Country, FUN = function(Country){paste(strwrap(Country, width = 20), collapse="<br>")})
-
-shared_tracker<-SharedData$new(m)
-
-shared_tracker%>%
+plot_cat<-shared_xx%>%
   plot_ly(type = 'bar',
     x=~Countries,
     y=~Category,
@@ -629,22 +670,11 @@ shared_tracker%>%
    name = ~paste(`Measure code`, Measure,sep=':'),
    text= ~paste(Measure, Country, sep ="\n"),
    textposition= 'none',
-   hoverinfo='text'
+   hoverinfo='text',
+   showlegend=F
   )%>%layout(barmode='stack')
 
-```
-
-### By Region
-```{r}
-reg<-tracker_merge%>%group_by(Measure,`Measure code`,Region, Country, Element)%>%count(Country)%>%
-  summarise('Countries'=sum(n))
-
-reg$Measurewrap<-sapply(reg$Measure, FUN = function(Measure){paste(strwrap(Measure, width = 50), collapse = "<br>")})
-
-reg$Measurewrap<-factor(reg$Measurewrap, levels = unique(reg$Measurewrap)[order(reg$`Measure code`,decreasing = F)])
-
-shared_reg<-SharedData$new(reg)
-shared_reg%>%
+plot_reg<-shared_xx%>%
   plot_ly(type = 'bar',
     x=~Countries,
     y=~Region,
@@ -652,18 +682,20 @@ shared_reg%>%
      name = ~paste(`Measure code`, Measure,sep=':'),
     text= ~paste(Measure, Country, sep ="\n"),
    textposition= 'none',
-   hoverinfo='text'
-  )%>%layout(barmode='stack', showlegend=FALSE)
+   hoverinfo='text',
+   showlegend=T
+  )%>%layout(barmode='stack')
+
+subplot(plot_cat,plot_reg, nrows = 2, margin = 0.05)
 ```
 
-
-
 ##### gg
-```{r}
+```{r, eval=FALSE}
 x<-ggplot(shared_reg, aes(Countries, `Measure code`))+
    geom_bar(aes(fill = Element, color = Region), position = "stack", stat = "identity")+scale_color_manual(values = c(rep("grey", 17)))+theme(legend.position = "none")
 ggplotly(x)
 ```
+
 
 Filters {.sidebar}
 --------------------------------------------
@@ -671,8 +703,9 @@ Filters {.sidebar}
 ```{r}
 
 
-filter_select("Element", "Select Element", shared_tracker, ~Element, multiple=TRUE, allLevels = TRUE)
-filter_select("Measure", "Select Measure", shared_tracker, ~Measure, multiple=TRUE, allLevels = TRUE)
+filter_select("Element", "Select Element", shared_xx, ~Element, multiple=TRUE, allLevels = TRUE)
+filter_select("Measure", "Select Measure", shared_xx, ~Measure, multiple=TRUE)
+filter_checkbox("All", "Select Country", shared_xx, ~Country,columns = 1, allLevels = F)
 
 #filter_select("Region", "Filter by Region", shared_tracker, ~Region, multiple=TRUE, allLevels = TRUE)
 
@@ -685,6 +718,20 @@ filter_select("Measure", "Select Measure", shared_tracker, ~Measure, multiple=TR
 
 ``` 
 
+
+__*** To un-filter, delete item from filter box__
+
+
+```{js}
+function filter_default() {
+    document.getElementById("Select Element").getElementsByClassName("selectized") 
+[0].selectize.setValue("Laying the ground work and addressing gaps", false);
+ }
+$(document).ready(filter_default);
+
+```
+
+
 NAP Submissions
 ========================================================
 
@@ -692,21 +739,34 @@ NAP Submissions
 
 ```{r, warning=FALSE, message=F}
 
+library(ggmap)
+library(tidyverse)
 
+NAP_Countries<-NAP_Countries%>%mutate(hasNAP=paste('Yes'))
 NAP_Countries$`Document title`<-paste('<a href=',NAP_Countries$Link, '>',NAP_Countries$`Document title`,'</a>', sep = "")
 
 NAP_Countries<-NAP_Countries%>%
    mutate(popup_info=paste(countryname,"<br>","Submitted on:",NAP_Countries$`Date of submission`,"<br>","Title:",NAP_Countries$`Document title`))
 
-leaflet(NAP_Countries)%>%setView(lng= 35.79, lat= -9.71 , zoom = 2.5)%>%
+map.world <- map_data("world")
+map.world_joined <- left_join(map.world, NAP_Countries, by = c('region' = 'countryname'))
+
+library(leaflet)
+#NAP_Countries$`Document title`<-paste('<a href=',NAP_Countries$Link, '>',NAP_Countries$`Document title`,'</a>', sep = "")
+
+#NAP_Countries<-NAP_Countries%>%
+  # mutate(popup_info=paste(countryname,"<br>","Submitted on:",NAP_Countries$`Date of submission`,"<br>","Title:",NAP_Countries$`Document title`))
+
+leaflet()%>%setView(lng= 35.79, lat= -9.71 , zoom = 2.5)%>%
   addTiles()%>%
   setMaxBounds(0,-60,90,60)%>%
   addCircleMarkers(data=NAP_Countries, fill=T,lng=~lon, lat =~lat, radius = 6, color='red', popup =~popup_info)%>%
+  #addAwesomeMarkers(data=NAP_Countries, lng=~lon, lat =~lat, popup =~popup_info)%>%
+  #addPolygons(data = map.world_joined,lng=~long, lat =~lat.x,fill=~hasNAP, popup =~popup_info )%>%
   addMiniMap()
- 
- 
-```
 
+
+```
 
 
 GCF Resources - Interactive {style="position:relative;"}
@@ -731,7 +791,7 @@ filter_slider("Time in Months","Time (months) taken to approve GCF",shared_df,~`
 
 
 
-_To Deselect, delete the item from filter box_
+__*** To un-filter, delete the item from filter box__
 
 
 Row {style="height:100pc;"}
