@@ -937,17 +937,26 @@ datatable(proj,filter = 'top',selection = 'multiple',callback = JS("return table
 Explore NAP Measures with pivot table 
 =================================================
 
-{style="height:100pc;"}
----------------------------
-__Hint__  
+Column {data-width=250}
+-------------------------------------------------------
+
+### __Application hint__
+
+ 
 1. Select desired graphic to draw from the drop-down menu on the first column    
-2. Drag-&-Drop the variable(s) of interest from the first column into the second column. To remove variables from the active (second column) drag-&-drop them back to the first column      
-3. Then from the drop down menu on the second column select how you want to represent your values e.g as a Count, Sum, List, etc. See screenshot.    
-![how to work the pivot table](pivottable_how_to.png){width=5in}
+2. Drag-&-Drop the variable(s) of interest from the first column into the second column. 
+To remove variables from the active (second column) drag-&-drop them back to the first column      
+3. Then from the drop down menu on the second column select how you want to represent your values 
+e.g as a Count, Sum, List, etc. See screenshot.    
+![how to work the pivot table](pivottable_how_to.png){width=6in}
 
 
+{style="height:100pc;"} 
+---------------------------------------------------------
+### Measures by Pivot
 ```{r}
-rpivotTable(data=tracker, cols =c('Measure code', 'Measure', 'Region'), rows = c('Measure code', 'Measure', 'Region'),  rendererName ='Row Heatmap', vals = 'Measure', aggregatorName = 'Count')
+colnames(tracker)[colnames(tracker)=="category"]<-"Category"
+rpivotTable(data=tracker[,c(6,7,8,2,5,4,12,13)], cols =c('Measure code', 'Measure', 'Region'), rows = c('Measure code', 'Measure', 'Region'),  rendererName ='Row Heatmap', vals = 'Measure', aggregatorName = 'Count')
 ```
 
 
