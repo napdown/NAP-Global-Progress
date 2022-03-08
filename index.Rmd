@@ -1,5 +1,5 @@
 ---
-title: "NAP Global Progress "
+title: "NAP Progress"
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
@@ -92,7 +92,7 @@ sccf_shared<-SharedData$new(sccf)
 ```
 
 
-Progress to Formulate & Implement NAPS
+Measures
 ==================================================================================
 column {.tabset}
 -------------------------------------------------------------
@@ -547,15 +547,18 @@ plot_ly(mshort, type='bar', x=~Countries, y=paste(mshort$`Measure code`,':', sub
 
 Find full list of measures[here](do we have a sharable link for the measures?)
 
-Measures Gen - Interactive
+Measures-Interactive
 ============================================
 
-  column
+column {.tabset}
 -------------------------------
 
-###  __*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
+###  All Measures
+
+__*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
 
 ```{r}
+
 mdf<-as.data.frame(measures[,-c(2,3,4,9)])%>%reshape::melt(id.vars=c('Element', 'Measure1'))
 
 mdf$Measure1wrap<-sapply(mdf$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 79), collapse = "<br>")})
@@ -578,7 +581,39 @@ filter
 
 ```
 
+### Select Measures
 
+__*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
+
+```{r}
+
+
+mselect<-measures%>%dplyr::filter(Code=='A1'|Code=='A2'|Code=='A3'|Code=='A8'|Code=='A9'|Code=='B3'|Code=='B7'|Code=='C3'|Code=='D4')
+
+mdf_select<-as.data.frame(mselect[,-c(2,3,4,9)])%>%reshape::melt(id.vars=c('Element', 'Measure1'))
+
+mdf_select$Measure1wrap<-sapply(mdf_select$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 60), collapse = "<br>")})
+
+mdf_select$Measure1wrap<-factor(mdf_select$Measure1wrap, levels = unique(mselect$Measure1wrap)[order(mselect$Code, decreasing = TRUE)])
+
+
+
+
+mselectkey <- highlight_key(mdf_select)
+
+p<-mselectkey%>%
+  plot_ly(type = 'bar',  x=~value, y=~Measure1wrap, color =~variable, colors = c("#50456e","#615f95","#a9a8cf"), text=~value, textposition= 'top  right',textfont=list(size=12, color='white'), height = 800)%>%
+  layout(barmode='stack', legend=list(orientation='h', x=0, y=-0.18), xaxis=list(title='No. of Countries'), yaxis=list(title='', standoff=45))
+
+filter <- bscols(
+    filter_select('id', '- Select an Element', mselectkey, ~Element),
+  filter_select("id", "     Select a measure", mselectkey, ~Measure1wrap),
+  ggplotly(p, dynamicTicks = TRUE),
+  widths = c(3,3, 10))
+
+filter
+
+```
 
 
 
@@ -644,15 +679,15 @@ plot_ly(shared_measures, x = ~LDCs, y = ~Measure1wrap, type = 'bar', orientation
 
 ```
 
-Measures Track - Interactive
+Measures2-Interactive
 ============================================================
 
-column
+row
 ------------------------------------------
 
-__*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
 
-###  
+
+###  __*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
 
 
 ```{r}
@@ -705,7 +740,7 @@ Filters {.sidebar}
 
 filter_select("Element", "Select Element", shared_xx, ~Element, multiple=TRUE, allLevels = TRUE)
 filter_select("Measure", "Select Measure", shared_xx, ~Measure, multiple=TRUE)
-filter_checkbox("All", "Select Country", shared_xx, ~Country,columns = 1, allLevels = F)
+#filter_checkbox("All", "Select Country", shared_xx, ~Country,columns = 1, allLevels = F)
 
 #filter_select("Region", "Filter by Region", shared_tracker, ~Region, multiple=TRUE, allLevels = TRUE)
 
@@ -769,7 +804,7 @@ leaflet()%>%setView(lng= 35.79, lat= -9.71 , zoom = 2.5)%>%
 ```
 
 
-GCF Resources - Interactive {style="position:relative;"}
+GCF {style="position:relative;"}
 ============================================================
 
 Filters {.sidebar}
@@ -794,17 +829,102 @@ filter_slider("Time in Months","Time (months) taken to approve GCF",shared_df,~`
 __*** To un-filter, delete the item from filter box__
 
 
-Row {style="height:100pc;"}
-------------------------------
+Column { .tabset, style="height:200pc;", data-height=650}
+-------------------------------------------------------
+
+
 ### Total GCF by Country {data-commentary-width=400}
 ```{r}
 
 shared_df%>%
   plot_ly(type='bar', x=~countryname,y=~`Grand Total GCF`, showlegend=F)%>%
-          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
+          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12), categoryorder='category ascending'),yaxis=list( tickfont=list(size=12), title='Amount ((Million USD)', titlefont=list(size=14)))
   
 
 ```
+
+
+### Total GCF Projects by Country {data-commentary-width=400}
+```{r}
+
+shared_df%>%
+  plot_ly(type='bar', x=~countryname,y=~`Total GCF financing (projects)`, showlegend=F)%>%
+          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12),categoryorder='category ascending'),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
+  
+
+```
+
+column {data-width=200, data-height=250}
+-----------------------------------------
+### GCF Resources by Country
+```{r}
+popup<-paste(df$countryname,'<br>', 'Total GCF: USD', df$`Grand Total GCF`, 'M')
+
+shared_df%>%
+  leaflet()%>%
+  setView(lng = 35.79,lat = -9.71, zoom = 1.49)%>%
+  addProviderTiles(providers$OpenStreetMap)%>%
+  #setMaxBounds(-90,-60,90,60)%>%
+  addCircleMarkers(fill = T, radius = ~`Grand Total GCF`*0.05,weight =~`Total GCF financing (projects)`*0.01, color = '#fc7204',
+    label = lapply(as.list(paste('<strong><strong>',df$countryname,'<br>', 'Total GCF: USD', df$`Grand Total GCF`,'M')), HTML),popup=paste(df$countryname,'<br>', 'Total GCF: USD', df$`Grand Total GCF`)
+)%>%addMeasure()%>%addResetMapButton()
+#%>%
+ # addCircles(fill = T, fillColor = 'red',fillOpacity = 0.5, weight = ~`Readiness support approved`*2,popup = paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`))
+#%>%addLegend('bottomleft', values = ~`Grand Total GCF`, title = 'GCF Total', labFormat = labelFormat(prefix = '$'), colors = 'browns')
+```
+
+
+#### GCF Projects Resources by Country
+
+```{r}
+popup<-paste(df$countryname,'<br>', 'Total GCF Projects: USD', df$`Total GCF financing (projects)`)
+
+shared_df%>%
+  leaflet()%>%
+  setView(lng = 35.79,lat = -9.71, zoom = 1.49)%>%
+  addProviderTiles(providers$OpenStreetMap)%>%
+  #setMaxBounds(-90,-60,90,60)%>%
+  addCircleMarkers(fill = T, radius = ~`Total GCF financing (projects)`*0.05,weight =~`Total GCF financing (projects)`*0.01, color = '#fc7204',
+    label = lapply(as.list(paste('<strong><strong>',df$countryname,'<br>', 'Total GCF Projects: USD', df$`Total GCF financing (projects)`,'M')), HTML),popup=paste(df$countryname,'<br>', 'Total GCF Projects: USD', df$`Total GCF financing (projects)`)
+)%>%addMeasure()%>%addResetMapButton()
+#%>%
+ # addCircles(fill = T, fillColor = 'red',fillOpacity = 0.5, weight = ~`Readiness support approved`*2,popup = paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`))
+#%>%addLegend('bottomleft', values = ~`Grand Total GCF`, title = 'GCF Total', labFormat = labelFormat(prefix = '$'), colors = 'browns')
+```
+
+
+### Map Notes
+
+The bigger the circle marker, the larger the Total GCF amount the country has accessed (incl. Projects and NAP readiness).
+
+The thicker the circle outline, the larger the amount the country has accessed specifically for GCF funded projects. 
+
+
+
+
+
+```{r,eval=FALSE}
+
+t<-shared_df%>%
+  plot_ly(type='bar', x=~countryname,y=~`Grand Total GCF`, showlegend=F)%>%
+          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
+
+
+r<-shared_df%>%
+      plot_ly(x=~countryname,y=~`Readiness support approved`, showlegend=F)%>%
+          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
+
+
+
+subplot(t,r, nrows = 2, margin = 0.05)
+
+```
+
+NAP Readiness
+==========================
+
+Column { .tabset, style="height:200pc;", data-height=650}
+-----------------------------------------------------------------
 
 
 ### Readiness Support
@@ -812,10 +932,9 @@ shared_df%>%
 
 shared_df%>%
       plot_ly(x=~countryname,y=~`Readiness support approved`, showlegend=F)%>%
-          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
+          plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12),categoryorder='category ascending'),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
   
 ```
-
 
 ### Readiness Approval Timeline
 ```{r}
@@ -833,9 +952,24 @@ shared_df%>%
   )
 ```
 
+column {data-width=200, data-height=250}
+-----------------------------------------
+### GCF Readinesss by Country
+```{r, eval=TRUE}
 
-Column {data-height=100}
----------------------------------------
+#popup<-paste(df$countryname,'<br>',  'Total Readiness: USD', df$`Readiness support approved`)
+
+shared_df%>%
+  leaflet()%>%
+  setView(lng = 35.79,lat = -9.71, zoom = 1.49)%>%
+  addProviderTiles(providers$CartoDB)%>%
+  #setMaxBounds(-90,-60,90,60)%>%
+  addCircleMarkers(fill = T, weight = ~`Readiness support approved`*0.1,radius =~`Readiness support approved`*2, color = '#fc7204',
+    label = lapply(as.list(paste('<strong><strong>',df$countryname,'<br>','Total Readiness: USD', df$`Readiness support approved`,'M')), HTML),popup=paste(df$countryname,'<br>','Total Readiness: $', df$`Readiness support approved`)
+)%>%addMeasure()%>%addResetMapButton()
+
+```
+
 
 ### Readiness by Delivery Partner
 ```{r}
@@ -843,50 +977,49 @@ mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readin
 
 bscols(
   plot_ly(shared_df)%>%
-  add_pie(hole=0.6, labels = ~`Delivery Partner_long`, values = ~`Readiness support approved`, text=~`Delivery Partner` , textinfo='labels',rotation=140, showlegend=F) %>%
+  add_pie(hole=0.6,labels = ~`Delivery Partner_long`, values = ~`Readiness support approved`, text=~`Delivery Partner` , textinfo='labels',rotation=140, showlegend=F) %>%
   layout(title="",
            legend=list(orientation='h', x=0, y=-0.9))
 )
 ```
 
-### GCF Resources by Country
-```{r}
-popup<-paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`)
-
-shared_df%>%
-  leaflet()%>%
-  setView(lng = 35.79,lat = -9.71, zoom = 1.49)%>%
-  addProviderTiles(providers$OpenStreetMap)%>%
-  #setMaxBounds(-90,-60,90,60)%>%
-  addCircleMarkers(fill = T, radius = ~`Grand Total GCF`*0.1,weight =~`Readiness support approved`, color = '#fc7204',
-    label = lapply(as.list(paste('<strong><strong>',df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`)), HTML),popup=paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`)
-)%>%addMeasure()%>%addResetMapButton()
-#%>%
- # addCircles(fill = T, fillColor = 'red',fillOpacity = 0.5, weight = ~`Readiness support approved`*2,popup = paste(df$countryname,'<br>', 'Total GCF:', df$`Grand Total GCF`,'<br>', 'Total Readiness:', df$`Readiness support approved`))
-#%>%addLegend('bottomleft', values = ~`Grand Total GCF`, title = 'GCF Total', labFormat = labelFormat(prefix = '$'), colors = 'browns')
-```
-
-LDCF
+LDCF/SCCF
 ===============================================================
 
-Filters {.sidebar}
-------------------------------
 
-```{r}
-filter_select("Region", "Filter by Region", ldcf_shared, ~Region, multiple=TRUE, allLevels = TRUE)
 
-filter_checkbox("Country Category", "Filter by Category", ldcf_shared, ~Category2,columns = 2, inline=T, allLevels = FALSE)
+```{r, eval=FALSE}
+filter_select("Region", "Filter by Region", ldcf, ~Region, multiple=TRUE, allLevels = TRUE)
 
-filter_select("Cat2", "More Categories", ldcf_shared, ~Category, multiple=TRUE)
+filter_checkbox("Country Category", "Filter by Category", ldcf, ~Category2,columns = 2, inline=T, allLevels = FALSE)
+
+filter_select("Cat2", "More Categories", ldcf, ~Category, multiple=TRUE)
  
-filter_checkbox("Status","Filter by Status",ldcf_shared,~Status)
+filter_checkbox("Status","Filter by Status",ldcf,~Status)
 ```
 
 Column
 ----------------------------------------------------------
 ### LDCF {data-commentary-width=400}
+
+
 ```{r}
-ldcf_shared%>%
+cldcf<-ldcf%>%group_by(countryname,Region, Category2)%>%summarise('Total'=sum(Grant))%>%na.omit()
+
+cldcf$countryname<-sapply(cldcf$countryname, FUN = function(countryname){paste(strwrap(countryname, width = 30), collapse = "<br>")})
+
+cldcf$countryname<-factor(cldcf$countryname, levels = unique(cldcf$countryname)[order(cldcf$Total, decreasing = TRUE)])
+
+
+plot_ly(cldcf, type = 'bar',  x=factor(cldcf$countryname, levels = unique(cldcf$countryname)[order(cldcf$Total, decreasing = TRUE)]), y=~Total,group = ~Region, color = ~Category2, colors = c('orange','blue'))%>%
+layout(xaxis=list(title='',tickfont=list(size=12)), yaxis=list(title='', standoff=45))
+
+
+```
+
+
+```{r, eval=FALSE}
+ldcf%>%
   plot_ly(type='bar', x=~countryname,y=~Grant, showlegend=F)%>%
           plotly::layout(barmode='stack', title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
   
@@ -895,22 +1028,65 @@ ldcf_shared%>%
 
 
 ### SCCF
-```{r}
-sccf_shared%>%
+```{r, eval=FALSE}
+sccf%>%
   plot_ly(type='bar', x=~countryname,y=~Grant, showlegend=F)%>%
           plotly::layout(title='', xaxis = list(title = "", tickangle=90, tickfont=list(size=12)),yaxis=list( tickfont=list(size=14), title='Amount ((Million USD)', titlefont=list(size=14)))
 
 ```
 
-
-row
-----------------------------------------------------
-### GEF Project Status
 ```{r}
+
+csccf<-sccf%>%group_by(countryname, Region, Category2)%>%summarise('Total'=sum(Grant))%>%na.omit()
+
+csccf$countryname<-sapply(csccf$countryname, FUN = function(countryname){paste(strwrap(countryname, width = 30), collapse = "<br>")})
+
+csccf$countryname<-factor(csccf$countryname, levels = unique(csccf$countryname)[order(csccf$Total, decreasing = TRUE)])
+
+
+plot_ly(csccf, type = 'bar',  x=~countryname, y=~Total, color = ~Category2, colors = c('orange','blue'))%>%
+layout(xaxis=list(title='',tickfont=list(size=12)), yaxis=list(title='', standoff=45))
+
+
+```
+
+
+
+
+
+row {data-width=200}
+----------------------------------------------------
+ #### GEF Project Status
+```{r, eval=FALSE}
 stat<-ldcf%>%group_by(Status, countryname)%>%summarise('value'=unique(Status))%>%count(countryname)%>%summarise('count'= sum(n))
 
 plot_ly(stat)%>%
   add_pie(hole=0.4, labels = ~Status, values = ~count, text=~Status , textinfo='labels',rotation=140, showlegend=F) %>%
+  layout(title="",
+           legend=list(orientation='h', x=0, y=-0.9))
+
+```
+
+
+### LDCF by Region
+```{r}
+regl<-ldcf%>%group_by(Region)%>%summarise('Total'=sum(Grant))
+
+plot_ly(regl)%>%
+  add_pie(hole=0.6, labels = ~Region, values = ~Total, text=~Region , textinfo='labels',rotation=110, showlegend=F) %>%
+  layout(title="",
+           legend=list(orientation='h', x=0, y=-0.9))
+
+```
+
+### SCCF by Region
+```{r}
+regs<-sccf%>%group_by(Region)%>%summarise('Total'=sum(Grant))
+mytext <- paste(regs$Region,paste('$',prettyNum(format(sum(regs$Total),big.mark = ","), "", sep = ",")),  sep = " \n")
+
+
+plot_ly(regs)%>%
+  add_pie(hole=0.6, labels = mytext, values = ~Total, text=~Region , textinfo=  mytext, textposition='auto', rotation=190, showlegend=F) %>%
   layout(title="",
            legend=list(orientation='h', x=0, y=-0.9))
 
@@ -951,7 +1127,7 @@ e.g as a Count, Sum, List, etc. See screenshot.
 ![how to work the pivot table](pivottable_how_to.png){width=6in}
 
 
-{style="height:100pc;"} 
+{style="height:200pc;"} 
 ---------------------------------------------------------
 ### Measures by Pivot
 ```{r}
