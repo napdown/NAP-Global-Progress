@@ -12,6 +12,42 @@ output:
    
 ---
 
+<style type="text/css">
+
+.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:hover, .navbar-inverse .navbar-nav>.active>a:focus {
+color: #fbb034;
+background-color: #00467f;
+border-color: #002a4c;
+font-weight: 900;
+}
+
+.chart-title {
+    border-bottom: 1px solid #d7d7d7;
+    color: #333333;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 7px 10px 4px;
+}
+
+.heading-level1 {  /* chart_title  */
+   color: #00467f;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+h4, .h4 {
+   color: #002a4c;
+    font-size: 15px;
+    font-weight: 550;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+</style>
+
+
 
 ```{r libraries}
 library(flexdashboard)
@@ -97,7 +133,7 @@ Measures
 column {.tabset}
 -------------------------------------------------------------
 
-### Measures General Outlook
+### __Measures General Outlook__
 
 ```{r}
 measures$Measure1wrap<-sapply(measures$Measure1, FUN = function(Measure1){paste(strwrap(Measure1, width = 79), collapse = "<br>")})
@@ -142,7 +178,7 @@ fig
 
 ```
 
-### Measures Outlook - Grouped
+### __Measures Outlook - Grouped__
 ```{r}
 A <- list(
   x = 2.5,
@@ -272,7 +308,7 @@ ggplot(mdf)+
 
 Select Measures
 
-### Select Measures- General Outlook
+### __Select Measures- General Outlook__
 ```{r}
 mselect<-measures%>%dplyr::filter(Code=='A1'|Code=='A2'|Code=='A3'|Code=='A8'|Code=='A9'|Code=='B3'|Code=='B7'|Code=='C3'|Code=='D4')
 
@@ -310,7 +346,7 @@ plot_ly(mselect, x = ~LDCs, y = ~Measure1, type = 'bar', orientation = 'h', text
 ```
 
 
-#### Important Measures -  general
+#### __Important Measures -  general__
 
 ```{r}
 #selected_measures<-measures%>%dplyr::filter(Code=='A1'|Code=='A2'|Code=='A3'|Code=='A8'|Code=='A9'|Code=='B3'|Code=='B7'|Code=='C3'|Code=='D4')
@@ -328,7 +364,7 @@ plot_ly(df1,type='bar',x=~Measurewrap, y=~Countries, text=~Countries, textpositi
 ```
 
 
-### Select Measures - By Region
+### __Select Measures - By Region__
 
 ```{r}
 
@@ -429,7 +465,7 @@ plotly::subplot(af_plot, asia_plot,lac_plot,eu_plot, titleX = T,shareY = T, marg
 
 ```
 
-#### Important Measures by Country Category
+#### __Important Measures by Country Category__
 
 ```{r}
 
@@ -474,7 +510,7 @@ plotly::subplot(ldc_plot,sids_plot,ldc_sids_plot,lldc_plot,ldc_lldc_plot,otherdc
 
 ```
 
-### Select Measures - By Country Category
+### __Select Measures - By Country Category__
 
 ```{r}
 ldctitle <- list(
@@ -532,7 +568,7 @@ plotly::subplot(ldc_plot,otherdc_plot, titleX = T,shareY = T, margin = 0.01)%>% 
 
 ```
 
-###### Measures Select- Outlook
+###### __Measures Select- Outlook__
 
 ```{r}
 mshort<-selected_measures[,c(3,5,6,7,8,19)]%>%group_by(Measure, Category2, `Measure code`)%>%count(Country)%>%summarise("Countries"=sum(n))
@@ -553,9 +589,9 @@ Measures-Interactive
 column {.tabset}
 -------------------------------
 
-###  All Measures
+###  __All Measures__
 
-__*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
+_*** To un-filter, delete item from filter box_,          _** To reset all filters, refresh your browser_
 
 ```{r}
 
@@ -581,9 +617,9 @@ filter
 
 ```
 
-### Select Measures
+### __Select Measures__
 
-__*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
+_*** To un-filter, delete item from filter box_,          _** To reset all filters, refresh your browser_
 
 ```{r}
 
@@ -679,17 +715,14 @@ plot_ly(shared_measures, x = ~LDCs, y = ~Measure1wrap, type = 'bar', orientation
 
 ```
 
-Measures2-Interactive
+Measures - Categorized
 ============================================================
 
 row
 ------------------------------------------
 
 
-
-###  __*** To un-filter, delete item from filter box__,          __** To reset all filters, refresh your browser__
-
-
+### 
 ```{r}
 
 xx<-tracker_merge%>%group_by(Measure,`Measure code`,Country, Region, Category, Element)%>%count(Country)%>%
@@ -756,6 +789,8 @@ filter_select("Measure", "Select Measure", shared_xx, ~Measure, multiple=TRUE)
 
 __*** To un-filter, delete item from filter box__
 
+__** To reset all filters, refresh your browser__
+
 
 ```{js}
 function filter_default() {
@@ -770,7 +805,7 @@ $(document).ready(filter_default);
 NAP Submissions
 ========================================================
 
-### Countries with submitted NAPS
+### __Countries with submitted NAPS__
 
 ```{r, warning=FALSE, message=F}
 
@@ -817,8 +852,7 @@ filter_checkbox("Country Category", "Filter by Category", shared_df, ~Category2,
 
 filter_select("Cat2", "More Categories", shared_df, ~Category, multiple=TRUE)
  
-filter_slider("Time in Months","Time (months) taken to approve GCF",shared_df,~`Time-to-approve (Months)`, min = 0, max = 40, width = 200)
-
+#filter_slider("Time in Months","Time (months) taken to approve GCF",shared_df,~`Time-to-approve (Months)`, min = 0, max = 40, width = 200)
 
 
 ``` 
@@ -833,7 +867,7 @@ Column { .tabset, style="height:200pc;", data-height=650}
 -------------------------------------------------------
 
 
-### Total GCF by Country {data-commentary-width=400}
+### __Total GCF by Country__ {data-commentary-width=400}
 ```{r}
 
 shared_df%>%
@@ -844,7 +878,7 @@ shared_df%>%
 ```
 
 
-### Total GCF Projects by Country {data-commentary-width=400}
+### __Total GCF Project Amounts by Country__ {data-commentary-width=400}
 ```{r}
 
 shared_df%>%
@@ -854,9 +888,9 @@ shared_df%>%
 
 ```
 
-column {data-width=200, data-height=250}
+column {data-width=220, data-height=350}
 -----------------------------------------
-### GCF Resources by Country
+### __GCF Resources by Country__
 ```{r}
 popup<-paste(df$countryname,'<br>', 'Total GCF: USD', df$`Grand Total GCF`, 'M')
 
@@ -874,7 +908,7 @@ shared_df%>%
 ```
 
 
-#### GCF Projects Resources by Country
+#### __GCF Projects Resources by Country__
 
 ```{r}
 popup<-paste(df$countryname,'<br>', 'Total GCF Projects: USD', df$`Total GCF financing (projects)`)
@@ -895,9 +929,9 @@ shared_df%>%
 
 ### Map Notes
 
-The bigger the circle marker, the larger the Total GCF amount the country has accessed (incl. Projects and NAP readiness).
+ * The bigger the circle marker, the larger the Total GCF amount the country has accessed (incl. Projects and NAP readiness).
 
-The thicker the circle outline, the larger the amount the country has accessed specifically for GCF funded projects. 
+ * The thicker the circle outline, the larger the amount the country has accessed specifically for GCF funded projects. 
 
 
 
@@ -923,11 +957,25 @@ subplot(t,r, nrows = 2, margin = 0.05)
 NAP Readiness
 ==========================
 
+Filters {.sidebar}
+--------------------------------------------
+
+```{r}
+filter_select("Region", "Filter by Region", shared_df, ~Region, multiple=TRUE, allLevels = TRUE)
+
+filter_checkbox("Country Category", "Filter by Category", shared_df, ~Category2,columns = 2, inline=T, allLevels = FALSE)
+
+filter_select("Cat2", "More Categories", shared_df, ~Category, multiple=TRUE)
+ 
+filter_slider("Time in Months","Time (months) taken to approve GCF",shared_df,~`Time-to-approve (Months)`, min = 0, max = 40, width = 200)
+
+
+``` 
+
 Column { .tabset, style="height:200pc;", data-height=650}
 -----------------------------------------------------------------
 
-
-### Readiness Support
+### __Readiness Support__
 ```{r}
 
 shared_df%>%
@@ -936,7 +984,7 @@ shared_df%>%
   
 ```
 
-### Readiness Approval Timeline
+### __Readiness Approval Timeline__
 ```{r}
 
   bscols(
@@ -954,7 +1002,7 @@ shared_df%>%
 
 column {data-width=200, data-height=250}
 -----------------------------------------
-### GCF Readinesss by Country
+### __GCF Readinesss by Country__
 ```{r, eval=TRUE}
 
 #popup<-paste(df$countryname,'<br>',  'Total Readiness: USD', df$`Readiness support approved`)
@@ -971,7 +1019,7 @@ shared_df%>%
 ```
 
 
-### Readiness by Delivery Partner
+### __Readiness by Delivery Partner__
 ```{r}
 mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readiness support approved`),big.mark = ","), "", sep = ",")),  sep = " \n")
 
@@ -1000,7 +1048,7 @@ filter_checkbox("Status","Filter by Status",ldcf,~Status)
 
 Column
 ----------------------------------------------------------
-### LDCF {data-commentary-width=400}
+### __LDCF__ {data-commentary-width=400}
 
 
 ```{r}
@@ -1027,7 +1075,7 @@ ldcf%>%
 ```
 
 
-### SCCF
+### __SCCF__
 ```{r, eval=FALSE}
 sccf%>%
   plot_ly(type='bar', x=~countryname,y=~Grant, showlegend=F)%>%
@@ -1056,7 +1104,7 @@ layout(xaxis=list(title='',tickfont=list(size=12)), yaxis=list(title='', standof
 
 row {data-width=200}
 ----------------------------------------------------
- #### GEF Project Status
+
 ```{r, eval=FALSE}
 stat<-ldcf%>%group_by(Status, countryname)%>%summarise('value'=unique(Status))%>%count(countryname)%>%summarise('count'= sum(n))
 
@@ -1068,7 +1116,7 @@ plot_ly(stat)%>%
 ```
 
 
-### LDCF by Region
+### __LDCF by Region__
 ```{r}
 regl<-ldcf%>%group_by(Region)%>%summarise('Total'=sum(Grant))
 
@@ -1079,7 +1127,7 @@ plot_ly(regl)%>%
 
 ```
 
-### SCCF by Region
+### __SCCF by Region__
 ```{r}
 regs<-sccf%>%group_by(Region)%>%summarise('Total'=sum(Grant))
 mytext <- paste(regs$Region,paste('$',prettyNum(format(sum(regs$Total),big.mark = ","), "", sep = ",")),  sep = " \n")
