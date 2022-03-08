@@ -85,6 +85,7 @@ Readiness<- as.data.frame(read_excel("Open_NAPs_Database.xlsm",sheet = "Readines
 approvals<-as.data.frame(read_excel("Open_NAPs_Database.xlsm", sheet = "Readiness_Approval"))%>%na.omit()
 gef<-read_excel("Open_NAPs_Database.xlsm", sheet = "GEF")
 
+#NAPS$`Date of submission`<-as.Date(NAPS$`Date of submission`, format ="%Y/%m/%d" )
 
 #merge
 GCF_merge<-merge(GCF_accessed, categories, by='countryname', all.x = T)
@@ -816,8 +817,10 @@ NAP_Countries<-NAP_Countries%>%mutate(hasNAP=paste('Yes'))
 NAP_Countries$`Document title`<-paste('<a href=',NAP_Countries$Link, '>',NAP_Countries$`Document title`,'</a>', sep = "")
 
 NAP_Countries<-NAP_Countries%>%
-   mutate(popup_info=paste(countryname,"<br>","Submitted on:",NAP_Countries$`Date of submission`,"<br>","Title:",NAP_Countries$`Document title`))
+   mutate(popup_info=paste('<strong><strong>',countryname,"<br>","Submitted on:",NAP_Countries$`Date of submission`,"<br>","Title:",NAP_Countries$`Document title`))
 
+
+                             
 map.world <- map_data("world")
 map.world_joined <- left_join(map.world, NAP_Countries, by = c('region' = 'countryname'))
 
@@ -828,10 +831,10 @@ library(leaflet)
   # mutate(popup_info=paste(countryname,"<br>","Submitted on:",NAP_Countries$`Date of submission`,"<br>","Title:",NAP_Countries$`Document title`))
 
 leaflet()%>%setView(lng= 35.79, lat= -9.71 , zoom = 2.5)%>%
-  addTiles()%>%
+  addProviderTiles(providers$CartoDB)%>%
   setMaxBounds(0,-60,90,60)%>%
-  addCircleMarkers(data=NAP_Countries, fill=T,lng=~lon, lat =~lat, radius = 6, color='red', popup =~popup_info)%>%
-  #addAwesomeMarkers(data=NAP_Countries, lng=~lon, lat =~lat, popup =~popup_info)%>%
+  #addCircleMarkers(data=NAP_Countries, fill=T,lng=~lon, lat =~lat, radius = 6, color='red', popup =~popup_info)%>%
+  addAwesomeMarkers(data=NAP_Countries, lng=~lon, lat =~lat, popup =~popup_info)%>%
   #addPolygons(data = map.world_joined,lng=~long, lat =~lat.x,fill=~hasNAP, popup =~popup_info )%>%
   addMiniMap()
 
@@ -1012,7 +1015,7 @@ shared_df%>%
   setView(lng = 35.79,lat = -9.71, zoom = 1.49)%>%
   addProviderTiles(providers$CartoDB)%>%
   #setMaxBounds(-90,-60,90,60)%>%
-  addCircleMarkers(fill = T, weight = ~`Readiness support approved`*0.1,radius =~`Readiness support approved`*2, color = '#fc7204',
+  addCircleMarkers(fill = T, weight = ~`Readiness support approved`*0.2,radius =~`Readiness support approved`*2.5, color = '#990000',
     label = lapply(as.list(paste('<strong><strong>',df$countryname,'<br>','Total Readiness: USD', df$`Readiness support approved`,'M')), HTML),popup=paste(df$countryname,'<br>','Total Readiness: $', df$`Readiness support approved`)
 )%>%addMeasure()%>%addResetMapButton()
 
