@@ -1015,7 +1015,7 @@ shared_df%>%
   setView(lng = 35.79,lat = -9.71, zoom = 1.49)%>%
   addProviderTiles(providers$CartoDB)%>%
   #setMaxBounds(-90,-60,90,60)%>%
-  addCircleMarkers(fill = T, weight = ~`Readiness support approved`*0.2,radius =~`Readiness support approved`*2.5, color = '#990000',
+  addCircleMarkers(fill = T, weight = ~`Readiness support approved`*0.2,radius =~`Readiness support approved`*2.5, color = '#ff7f0e',
     label = lapply(as.list(paste('<strong><strong>',df$countryname,'<br>','Total Readiness: USD', df$`Readiness support approved`,'M')), HTML),popup=paste(df$countryname,'<br>','Total Readiness: $', df$`Readiness support approved`)
 )%>%addMeasure()%>%addResetMapButton()
 
