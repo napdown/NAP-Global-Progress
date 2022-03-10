@@ -1025,15 +1025,15 @@ shared_df%>%
 ### __Readiness by Delivery Partner__
 ```{r}
 
-df$`Delivery Partner`<-sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 50), collapse = "<br>")})
+#df$`Delivery Partner`<-sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 50), collapse = "<br>")})
 
-mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readiness support approved`),big.mark = ","), "", sep = ",")),  sep = " \n")
+#mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readiness support approved`),big.mark = ","), "", sep = ",")),  sep = " \n")
 
 bscols(
   plot_ly(shared_df)%>%
-  add_pie(hole=0.6,labels = ~`Delivery Partner`, values = ~`Readiness support approved`, text=sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 15), collapse = "<br>")}) , textinfo='labels', rotation=130, showlegend=F) %>%
+  add_pie(hole=0.6,labels = ~`Delivery Partner`, values = ~`Readiness support approved`, text=sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 15), collapse = "<br>")}), textinfo='labels', rotation=130, showlegend=F) %>%
   layout(title="",
-            font=list(size=9))
+            font=list(size=10))
 )
 ```
 
