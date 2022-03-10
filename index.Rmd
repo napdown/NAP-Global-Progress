@@ -588,7 +588,7 @@ Measures-Interactive
 ============================================
 
 column {.tabset}
--------------------------------
+--------------------------------------
 
 ###  __All Measures__
 
@@ -1003,7 +1003,7 @@ shared_df%>%
   )
 ```
 
-column {data-width=200, data-height=250}
+column {data-width=250, data-height=250}
 -----------------------------------------
 ### __GCF Readinesss by Country__
 ```{r, eval=TRUE}
@@ -1031,9 +1031,9 @@ mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readin
 
 bscols(
   plot_ly(shared_df)%>%
-  add_pie(hole=0.6,labels = ~`Delivery Partner`, values = ~`Readiness support approved`, text=sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 30), collapse = "<br>")}) , textinfo='labels', rotation=120, showlegend=F) %>%
+  add_pie(hole=0.6,labels = ~`Delivery Partner`, values = ~`Readiness support approved`, text=sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 15), collapse = "<br>")}) , textinfo='labels', rotation=130, showlegend=F) %>%
   layout(title="",
-            font=list(size=10))
+            font=list(size=9))
 )
 ```
 
@@ -1127,9 +1127,8 @@ plot_ly(stat)%>%
 regl<-ldcf%>%group_by(Region)%>%summarise('Total'=sum(Grant))
 
 plot_ly(regl)%>%
-  add_pie(hole=0.6, labels = ~Region, values = ~Total, text=~Region , textinfo='labels',rotation=110, showlegend=F) %>%
-  layout(title="",
-           legend=list(orientation='h', x=0, y=-0.9))
+  add_pie(hole=0.6, labels = ~Region, values = ~Total, text=~Region , textinfo='labels',rotation=118, showlegend=F) %>%
+  layout(title="",font=list(size=11))
 
 ```
 
@@ -1140,9 +1139,8 @@ mytext <- paste(regs$Region,paste('$',prettyNum(format(sum(regs$Total),big.mark 
 
 
 plot_ly(regs)%>%
-  add_pie(hole=0.6, labels = mytext, values = ~Total, text=~Region , textinfo=  mytext, textposition='auto', rotation=190, showlegend=F) %>%
-  layout(title="",
-           legend=list(orientation='h', x=0, y=-0.9))
+  add_pie(hole=0.6, labels = mytext, values = ~Total, text=~Region , textinfo=  mytext, textposition='auto', rotation=210, showlegend=F) %>%
+  layout(title="",font=list(size=11))
 
 ```
 
