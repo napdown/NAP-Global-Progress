@@ -609,10 +609,10 @@ p<-mykey%>%
   layout(barmode='stack', legend=list(orientation='h', x=0, y=-0.18), xaxis=list(title='No. of Countries'), yaxis=list(title='', standoff=45))
 
 filter <- bscols(
-    filter_select('id', '- Select an Element', mykey, ~Element),
+    filter_select('id', ' - Select an Element', mykey, ~Element),
   filter_select("id", "     Select a measure", mykey, ~Measure1wrap),
   ggplotly(p, dynamicTicks = TRUE),
-  widths = c(3,3, 10))
+  widths = c( 3,3, 10))
 
 filter
 
@@ -643,7 +643,7 @@ p<-mselectkey%>%
   layout(barmode='stack', legend=list(orientation='h', x=0, y=-0.18), xaxis=list(title='No. of Countries'), yaxis=list(title='', standoff=45))
 
 filter <- bscols(
-    filter_select('id', '- Select an Element', mselectkey, ~Element),
+    filter_select('id', ' - Select an Element', mselectkey, ~Element),
   filter_select("id", "     Select a measure", mselectkey, ~Measure1wrap),
   ggplotly(p, dynamicTicks = TRUE),
   widths = c(3,3, 10))
@@ -1024,13 +1024,16 @@ shared_df%>%
 
 ### __Readiness by Delivery Partner__
 ```{r}
+
+df$`Delivery Partner`<-sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 50), collapse = "<br>")})
+
 mylabel <- paste(df$`Delivery Partner`,paste('$',prettyNum(format(sum(df$`Readiness support approved`),big.mark = ","), "", sep = ",")),  sep = " \n")
 
 bscols(
   plot_ly(shared_df)%>%
-  add_pie(hole=0.6,labels = ~`Delivery Partner_long`, values = ~`Readiness support approved`, text=~`Delivery Partner` , textinfo='labels',rotation=140, showlegend=F) %>%
+  add_pie(hole=0.6,labels = ~`Delivery Partner`, values = ~`Readiness support approved`, text=sapply(df$`Delivery Partner`, FUN = function(`Delivery Partner`){paste(strwrap(`Delivery Partner`, width = 30), collapse = "<br>")}) , textinfo='labels', rotation=120, showlegend=F) %>%
   layout(title="",
-           legend=list(orientation='h', x=0, y=-0.9))
+            font=list(size=10))
 )
 ```
 
@@ -1120,7 +1123,7 @@ plot_ly(stat)%>%
 
 
 ### __LDCF by Region__
-```{r}
+```{r, fig.height=4}
 regl<-ldcf%>%group_by(Region)%>%summarise('Total'=sum(Grant))
 
 plot_ly(regl)%>%
@@ -1131,7 +1134,7 @@ plot_ly(regl)%>%
 ```
 
 ### __SCCF by Region__
-```{r}
+```{r, fig.height=4}
 regs<-sccf%>%group_by(Region)%>%summarise('Total'=sum(Grant))
 mytext <- paste(regs$Region,paste('$',prettyNum(format(sum(regs$Total),big.mark = ","), "", sep = ",")),  sep = " \n")
 
