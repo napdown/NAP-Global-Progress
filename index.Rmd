@@ -7,7 +7,7 @@ output:
     orientation: columns
     vertical_layout: fill
     smooth_scroll: true
-    source_code: https://github.com/napdown/NAP-Global-Progress/index.Rmd
+    source_code: https://github.com/napdown/NAP-Global-Progress/index.html
     theme: paper
    
 ---
@@ -891,7 +891,7 @@ shared_df%>%
 
 ```
 
-column {data-width=220, data-height=350}
+column {data-width=200, data-height=350}
 -----------------------------------------
 ### __GCF Resources by Country__
 ```{r}
