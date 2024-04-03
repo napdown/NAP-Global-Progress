@@ -812,6 +812,7 @@ NAP Submissions
 
 library(ggmap)
 library(tidyverse)
+library(maps)
 
 NAP_Countries<-NAP_Countries%>%mutate(hasNAP=paste('Yes'))
 NAP_Countries$`Document title`<-paste('<a href=',NAP_Countries$Link, '>',NAP_Countries$`Document title`,'</a>', sep = "")
